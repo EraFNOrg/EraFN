@@ -3,4 +3,4 @@
 [cURL](https://curl.se): Used for redirecting Fortnite's server requests to a local server, you can read cURL's license [here](https://curl.se/docs/copyright.html).
 
 
-made by danii
+made by danii, kyiro, mix and fischsalat.
