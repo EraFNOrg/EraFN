@@ -141,6 +141,7 @@ namespace EraInit
 		if (Globals::CurrentEngineVersion == EEngineVersion::UE_NONE)
 		{
 			GObjectsAddress = FindPattern(XORSTRING("48 8B 05 ? ? ? ? 48 8B 0C C8 48 8D 04 D1 EB 03 48 8B ? 81 48 08 ? ? ? 40 49"));
+			if (!GObjectsAddress) GObjectsAddress = FindPattern(XORSTRING("48 8B 05 ? ? ? ? 48 8B 0C C8 48 8D 04 D1 EB 03 49 8B C5 81 48 ? ? ? ? ? ? 39 46 48"));
 			ToStringAddress = FindPattern(XORSTRING("48 89 5C 24 ? 57 48 83 EC 30 83 79 04 00 48 8B DA 48 8B F9"));
 			SpawnActorFromClassAddress = FindPattern(XORSTRING("40 53 56 57 48 83 EC 70 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 ? 0F 28 1D ? ? ? ? 0F 57 D2 48 8B B4 24 ? ? ? ? 0F 28 CB"));
 			FreeAddress = FindPattern(XORSTRING("48 85 C9 74 2E 53 48 83 EC 20 48 8B D9"));
@@ -195,13 +196,18 @@ namespace EraInit
 			}
 			else
 			{
-				Globals::ProcessEvent = decltype(Globals::ProcessEvent)(UObject::GetObjectFromName(XORSTRING("FortEngine_"))->Vtable[0x40]);
+				void* Ptr;
+				if (EngineVersion::GetVersion(&Ptr).find("7.4") != string::npos) Globals::ProcessEvent = decltype(Globals::ProcessEvent)(UObject::GetObjectFromName(XORSTRING("FortEngine_"))->Vtable[0x41]);
+				else Globals::ProcessEvent = decltype(Globals::ProcessEvent)(UObject::GetObjectFromName(XORSTRING("FortEngine_"))->Vtable[0x40]);
 			}
 
 			void* Ptr;
 			Globals::EngineVersionString = EngineVersion::EngineVer(&Ptr);
 
 			auto FindRowUncheckedAddress = FindPattern(XORSTRING("48 83 EC 08 48 83 79 ? ? 4C 8B D9 75 07 33 C0 48 83 C4 08 C3"));
+			if (!FindRowUncheckedAddress) {
+				FindRowUncheckedAddress = FindPattern(XORSTRING("40 53 48 83 EC 20 48 83 79 ? ? 48 8B DA 75 08"));
+			}
 			Globals::FindRowUnchecked = decltype(Globals::FindRowUnchecked)(FindRowUncheckedAddress);
 			Globals::StaticLoadObject = decltype(Globals::StaticLoadObject)(FindPattern(XORSTRING("40 55 53 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 8B 85 ? ? ? ? 33 F6 4C 8B BD ? ? ? ? 49 8B F9")));
 		}

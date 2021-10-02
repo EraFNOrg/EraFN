@@ -100,6 +100,7 @@ namespace OffsetTable {
 	int NumItemsToDropRange = 0;
 	int LootTierGroup = 0;
 	int AmmoData = 0;
+	int AmmoData416 = 0;
 	int EmoteAsset = 0;
 	int TossedFromContainer = 0;
 	int LootPackages = 0;
@@ -196,10 +197,18 @@ namespace Globals
 	TArray<int> ResourceItemCount;
 	UObject* LastItemDefinition;
 	UObject* CurrentPlaylist;
+	bool bPreparedLootArrays = false;
 
 	//libs 
 	UObject* kismetMathLib;
 	UObject* HudContext;
+
+	//skins
+	UObject* Body;
+	UObject* Head;
+	UObject* Hat;
+	UObject* BackPack;
+	bool bInitializedSkins;
 
 	bool bCanBuild;
 	bool _bCanBuild;
@@ -244,13 +253,12 @@ namespace Globals
 #endif
 }
 
-auto UniversalStructInstance = new Universal;
-
-
-
-struct EngineToViewport
+//Needed to avoid freezes
+namespace classes
 {
-	
-};
+	UObject* PlayerPawnClass;
+}
+
+auto UniversalStructInstance = new Universal;
 
 #endif // !OFFSETTABLE_H

@@ -19,6 +19,7 @@ GNU General Public License for more details.*/
 #include "OffsetTable.h"
 #include "GameFunctions.h"
 #include "Script.h"
+#include <thread>
 
 class GameManager
 {
@@ -75,6 +76,7 @@ public:
 		OffsetTable::NumItemsToDropRange = UObject::FindOffset(XORSTRING("StructProperty FortniteGame.BuildingContainer.NumItemsToDropRange"));
 		OffsetTable::LootTierGroup = UObject::FindOffset(XORSTRING("NameProperty FortniteGame.BuildingContainer.SearchLootTierGroup"));
 		OffsetTable::AmmoData = UObject::FindOffset(XORSTRING("SoftObjectProperty FortniteGame.FortWeaponItemDefinition.AmmoData"));
+		OffsetTable::AmmoData416 = UObject::FindOffset(XORSTRING("AssetObjectProperty FortniteGame.FortWeaponItemDefinition.AmmoData"));
 		OffsetTable::EmoteAsset = UObject::FindOffset(XORSTRING("SoftObjectProperty FortniteGame.FortMontageItemDefinitionBase.Animation"));
 		OffsetTable::TossedFromContainer = UObject::FindOffset(XORSTRING("BoolProperty FortniteGame.FortPickup.bTossedFromContainer"));
 		OffsetTable::LootPackages = UObject::FindOffset(XORSTRING("SoftObjectProperty FortniteGame.FortPlaylist.LootPackages"));
@@ -161,8 +163,12 @@ public:
 
 	void OnLoadingScreenDropped()
 	{
+		InitializeClasses();
+		InitializeFunctions();
+
 		//Init datatables
 		PrepareArray();
+		thread thread_array(PrepareArray);
 
 		SetupPositioning();
 #ifndef SERVERCODE
@@ -174,11 +180,13 @@ public:
 		ApplyBattleBus();
 		CustomizationLoadout();
 #endif
-
 		Globals::DroppedLS = true;
 
 #ifndef SERVERCODE
-		SpawnPickupsAthena_Terrain();
+		thread_array.join();
+		thread thread_pickups(SpawnPickupsAthena_Terrain);
+
+		thread_pickups.join();
 		EquipWeapon(GetDefinition(GetQuickbarItem(EFortQuickBars::Primary, 0)), GetGuid(GetQuickbarItem(EFortQuickBars::Primary, 0)));
 		FixSpawnForCH1();
 #endif
@@ -200,7 +208,7 @@ public:
 	{
 #if defined(RELEASEVERSION)
 		Summon(XORSTRING(TEXT("PlayerPawn_Athena_C")));
-		Globals::PlayerPawn = FindActorsFromClass(UObject::GetObjectFromName(XORSTRING("BlueprintGeneratedClass PlayerPawn_Athena.PlayerPawn_Athena_C")));
+		Globals::PlayerPawn = FindActorsFromClass(classes::PlayerPawnClass);
 		Possess();
 		AdjustRotation();
 		CustomizationLoadout();

@@ -399,7 +399,29 @@ FName StringToName(FString text)
 
 	Params.in = text;
 
-	Globals::ProcessEvent(object, fn, &Params);
+	if (fn) Globals::ProcessEvent(object, fn, &Params);
+	else
+	{
+		int ObjectCount = NewGObjectsPointer ? NewGObjectsPointer->ObjectCount : GObjectsPointer->ObjObjects.NumElements;
+
+		for (auto i = 0; i < ObjectCount; i++)
+		{
+			UObject* CurrentObject = NewGObjectsPointer ? FindObjectById(i) : GObjectsPointer->ObjObjects.GetByIndex(i);
+
+			if (CurrentObject == nullptr)
+			{
+				continue;
+			}
+
+			if (CurrentObject->GetFullName().find(XORSTRING("FortniteGame.FortLootPackageData.")) != string::npos)
+			{
+				if (CurrentObject->GetObjectNameString().find(text.ToString()) != string::npos)
+				{
+					return CurrentObject->Name;
+				}
+			}
+		}
+	}
 
 	return Params.Out;
 }
@@ -616,6 +638,18 @@ void SetMaxHealth(UObject* Target, float Value)
 
 void EquipSkin()
 {
+	static auto Onrep_CPS = UObject::GetObjectFromName(XORSTRING("Function FortniteGame.FortPlayerState.OnRep_CharacterParts"));
+
+	if (Globals::bInitializedSkins)
+	{
+		if (Globals::Body) ServerChoosePart(EFortCustomPartType::Body, Globals::Body);
+		if (Globals::Hat) ServerChoosePart(EFortCustomPartType::Hat, Globals::Hat);
+		if (Globals::Head) ServerChoosePart(EFortCustomPartType::Head, Globals::Head);
+		if (Globals::BackPack) ServerChoosePart(EFortCustomPartType::Backpack, Globals::BackPack);
+		Globals::ProcessEvent(Globals::PlayerState, Onrep_CPS, nullptr);
+		return;
+	}
+
 	std::vector<UObject*> CharacterPartsArray;
 
 	static auto FortHero = UObject::GetObjectFromName("FortHero Transient.FortHero_");
@@ -632,18 +666,22 @@ void EquipSkin()
 		if (AdditionalData->IsA(UObject::GetObjectFromName(XORSTRING("Class FortniteGame.CustomCharacterHeadData"))))
 		{
 			ServerChoosePart(EFortCustomPartType::Head, CharacterPartsArray[i]);
+			Globals::Head = CharacterPartsArray[i];
 		}
 		else if (AdditionalData->IsA(UObject::GetObjectFromName(XORSTRING("Class FortniteGame.CustomCharacterBodyPartData"))))
 		{
 			ServerChoosePart(EFortCustomPartType::Body, CharacterPartsArray[i]);
+			Globals::Body = CharacterPartsArray[i];
 		}
 		else if (AdditionalData->IsA(UObject::GetObjectFromName(XORSTRING("Class FortniteGame.CustomCharacterHatData"))))
 		{
 			ServerChoosePart(EFortCustomPartType::Hat, CharacterPartsArray[i]);
+			Globals::Hat = CharacterPartsArray[i];
 		}
 		else if (AdditionalData->IsA(UObject::GetObjectFromName(XORSTRING("Class FortniteGame.CustomCharacterBackpackData"))))
 		{
 			ServerChoosePart(EFortCustomPartType::Backpack, CharacterPartsArray[i]);
+			Globals::BackPack = CharacterPartsArray[i];
 		}
 	}
 
@@ -660,9 +698,9 @@ void EquipSkin()
 		}
 	}
 
-	static auto Onrep_CPS = UObject::GetObjectFromName(XORSTRING("Function FortniteGame.FortPlayerState.OnRep_CharacterParts"));
-
 	Globals::ProcessEvent(Globals::PlayerState, Onrep_CPS, nullptr);
+
+	Globals::bInitializedSkins = true;
 }
 
 void HideNetDebugUI()
@@ -942,6 +980,11 @@ FGuid GetGuid(UObject* FortItem)
 	Globals::ProcessEvent(FortItem, GetGuid, &params);
 
 	return params.ReturnValue;
+}
+
+int GetCount(UObject* FortItem)
+{
+	return *(int*)(__int64(FortItem) + OffsetTable::ItemEntry + OffsetTable::ItemEntryCount);
 }
 
 static void DestroyItem(UObject* Item, int Count)
@@ -1557,6 +1600,30 @@ FString AssetPtrToString(AssetPtr ptr)
 	return FString(wstring(CurrentName.begin(), CurrentName.end()).c_str());
 }
 
+UObject* AssetPtrToObject(AssetPtr ptr)
+{
+	static auto fn = UObject::GetObjectFromName(XORSTRING("Function Engine.KismetSystemLibrary.Conv_AssetToObject"));
+	static auto object = UObject::GetObjectFromName(XORSTRING("KismetSystemLibrary Engine.Default__KismetSystemLibrary"));
+
+	struct
+	{
+		AssetPtr in;
+		UObject* out;
+	} params;
+
+	params.in = ptr;
+
+	Globals::ProcessEvent(object, fn, &params);
+
+	if (IsBadReadPtr(params.out) ||
+		!params.out)
+	{
+		return nullptr;
+	}
+
+	return params.out;
+}
+
 FString IntToString(int var)
 {
 	static auto fn = UObject::GetObjectFromName(XORSTRING("Function Engine.KismetStringLibrary.Conv_IntToString"));
@@ -1595,48 +1662,93 @@ FString FloatToString(float var)
 
 static void PrepareArray()
 {
-	UObject::DumpObjects();
+	if (!Globals::bPreparedLootArrays) {
+		Globals::bPreparedLootArrays = true;
+		static auto ammo = UObject::GetObjectFromName(XORSTRING("Class FortniteGame.FortAmmoItemDefinition"));
+		static auto weaponranged = UObject::GetObjectFromName(XORSTRING("Class FortniteGame.FortWeaponRangedItemDefinition"));
+		static auto deco = UObject::GetObjectFromName(XORSTRING("Class FortniteGame.FortDecoItemDefinition"));
+		static auto resource = UObject::GetObjectFromName(XORSTRING("Class FortniteGame.FortResourceItemDefinition"));
 
-	static auto ammo = UObject::GetObjectFromName(XORSTRING("Class FortniteGame.FortAmmoItemDefinition"));
-	static auto weaponranged = UObject::GetObjectFromName(XORSTRING("Class FortniteGame.FortWeaponRangedItemDefinition"));
-	static auto deco = UObject::GetObjectFromName(XORSTRING("Class FortniteGame.FortDecoItemDefinition"));
-	static auto resource = UObject::GetObjectFromName(XORSTRING("Class FortniteGame.FortResourceItemDefinition"));
-
-	Globals::AthenaLoot = UObject::GetObjectFromName(XORSTRING("DataTable AthenaLootPackages_Client.AthenaLootPackages_Client"));
-	if (!Globals::AthenaLoot)
-	{
-		string Path = XORSTRING("/Game/Items/Datatables/AthenaLootPackages_Client");
-		Globals::AthenaLoot = Globals::StaticLoadObject(UObject::GetObjectFromName(XORSTRING("Class Engine.DataTable")), NULL, wstring(Path.begin(), Path.end()).c_str(), nullptr, 0, nullptr, true);
-	}
-
-	TArray<FString> ItemDefinitions = GetDataTableColumnAsString(Globals::AthenaLoot, StringToName(L"ItemDefinition"));
-	TArray<FString> Count = GetDataTableColumnAsString(Globals::AthenaLoot, StringToName(L"Count"));
-	TArray<FString> Weight = GetDataTableColumnAsString(Globals::AthenaLoot, StringToName(L"Weight"));
-
-	if (ItemDefinitions.Num() == 0 ||
-		Count.Num() == 0 || 
-		Weight.Num() == 0)
-	{
-		auto names = GetTableRowNames(Globals::AthenaLoot);
-
-		for (auto i = 0; i < names.Num(); i++)
+		Globals::AthenaLoot = UObject::GetObjectFromName(XORSTRING("DataTable AthenaLootPackages_Client.AthenaLootPackages_Client"));
+		if (!Globals::AthenaLoot)
 		{
-			auto currentPtr = Globals::FindRowUnchecked(Globals::AthenaLoot, names[i], false);
+			string Path = XORSTRING("/Game/Items/Datatables/AthenaLootPackages_Client");
+			Globals::AthenaLoot = Globals::StaticLoadObject(UObject::GetObjectFromName(XORSTRING("Class Engine.DataTable")), NULL, wstring(Path.begin(), Path.end()).c_str(), nullptr, 0, nullptr, true);
+		}
 
-			auto ItemDefinition = *(SoftObjectPtr*)(__int64(currentPtr) + OffsetTable::ItemDefinitionLoot);
-			auto ItemDefinition416 = *(AssetPtr*)(__int64(currentPtr) + OffsetTable::ItemDefinitionLoot416);
-			auto CurrentCount = *(int*)(__int64(currentPtr) + OffsetTable::CountLoot);
-			auto CurrentWeight = *(float*)(__int64(currentPtr) + OffsetTable::Weight);
+		TArray<FString> ItemDefinitions = GetDataTableColumnAsString(Globals::AthenaLoot, StringToName(L"ItemDefinition"));
+		TArray<FString> Count = GetDataTableColumnAsString(Globals::AthenaLoot, StringToName(L"Count"));
+		TArray<FString> Weight = GetDataTableColumnAsString(Globals::AthenaLoot, StringToName(L"Weight"));
 
-			if (OffsetTable::ItemDefinitionLoot > 0) {
-				ItemDefinitions.Add(SoftObjectPtrToString(ItemDefinition));
+		if (ItemDefinitions.Num() == 0 ||
+			Count.Num() == 0 ||
+			Weight.Num() == 0)
+		{
+			auto names = GetTableRowNames(Globals::AthenaLoot);
+
+			for (auto i = 0; i < names.Num(); i++)
+			{
+				auto currentPtr = Globals::FindRowUnchecked(Globals::AthenaLoot, names[i], false);
+
+				auto ItemDefinition = *(SoftObjectPtr*)(__int64(currentPtr) + OffsetTable::ItemDefinitionLoot);
+				auto ItemDefinition416 = *(AssetPtr*)(__int64(currentPtr) + OffsetTable::ItemDefinitionLoot416);
+				auto CurrentCount = *(int*)(__int64(currentPtr) + OffsetTable::CountLoot);
+				auto CurrentWeight = *(float*)(__int64(currentPtr) + OffsetTable::Weight);
+
+				if (OffsetTable::ItemDefinitionLoot > 0) {
+					ItemDefinitions.Add(SoftObjectPtrToString(ItemDefinition));
+				}
+				else {
+					ItemDefinitions.Add(AssetPtrToString(ItemDefinition416));
+				}
+				Count.Add(IntToString(CurrentCount));
+				Weight.Add(FloatToString(CurrentWeight));
+
+				if (ItemDefinitions[i].ToString().find("None") == string::npos)
+				{
+					if (stoi(Weight[i].ToString()) > 0)
+					{
+						auto CurrentItemDef = UObject::GetObjectFromName(ItemDefinitions[i].ToString(), false, true);
+						if (CurrentItemDef) {
+							auto CurrentCount = stoi(Count[i].ToString());
+							if (CurrentItemDef->IsA(ammo))
+							{
+								Globals::AmmoItemDefs.Add(CurrentItemDef);
+								Globals::AmmoItemCount.Add(CurrentCount);
+							}
+							else if (CurrentItemDef->IsA(weaponranged))
+							{
+								if (CurrentItemDef->GetObjectNameString().find("WID") == string::npos)
+								{
+									Globals::ConsumablesItemDefs.Add(CurrentItemDef);
+									Globals::ConsumablesItemCount.Add(CurrentCount);
+								}
+								else
+								{
+									Globals::WeaponItemDefs.Add(CurrentItemDef);
+									Globals::WeaponItemCount.Add(CurrentCount);
+								}
+							}
+							else if (CurrentItemDef->IsA(deco))
+							{
+								Globals::TrapsItemDefs.Add(CurrentItemDef);
+								Globals::TrapsItemCount.Add(CurrentCount);
+							}
+							else if (CurrentItemDef->IsA(resource))
+							{
+								Globals::ResourceItemDefs.Add(CurrentItemDef);
+								Globals::ResourceItemCount.Add(CurrentCount);
+							}
+						}
+					}
+				}
 			}
-			else {
-				ItemDefinitions.Add(AssetPtrToString(ItemDefinition416));
-			}
-			Count.Add(IntToString(CurrentCount));
-			Weight.Add(FloatToString(CurrentWeight)); 
+			printf(XORSTRING("All arrays have been set-up!\n"));
+			return;
+		}
 
+		for (int i = 0; i < ItemDefinitions.Num(); i++)
+		{
 			if (ItemDefinitions[i].ToString().find("None") == string::npos)
 			{
 				if (stoi(Weight[i].ToString()) > 0)
@@ -1676,53 +1788,9 @@ static void PrepareArray()
 				}
 			}
 		}
+
 		printf(XORSTRING("All arrays have been set-up!\n"));
-		return;
 	}
-
-	for (int i = 0; i < ItemDefinitions.Num(); i++)
-	{
-		if (ItemDefinitions[i].ToString().find("None") == string::npos)
-		{
-			if (stoi(Weight[i].ToString()) > 0)
-			{
-				auto CurrentItemDef = UObject::GetObjectFromName(ItemDefinitions[i].ToString(), false, true);
-				if (CurrentItemDef) {
-					auto CurrentCount = stoi(Count[i].ToString());
-					if (CurrentItemDef->IsA(ammo))
-					{
-						Globals::AmmoItemDefs.Add(CurrentItemDef);
-						Globals::AmmoItemCount.Add(CurrentCount);
-					}
-					else if (CurrentItemDef->IsA(weaponranged))
-					{
-						if (CurrentItemDef->GetObjectNameString().find("WID") == string::npos)
-						{
-							Globals::ConsumablesItemDefs.Add(CurrentItemDef);
-							Globals::ConsumablesItemCount.Add(CurrentCount);
-						}
-						else
-						{
-							Globals::WeaponItemDefs.Add(CurrentItemDef);
-							Globals::WeaponItemCount.Add(CurrentCount);
-						}
-					}
-					else if (CurrentItemDef->IsA(deco))
-					{
-						Globals::TrapsItemDefs.Add(CurrentItemDef);
-						Globals::TrapsItemCount.Add(CurrentCount);
-					}
-					else if (CurrentItemDef->IsA(resource))
-					{
-						Globals::ResourceItemDefs.Add(CurrentItemDef);
-						Globals::ResourceItemCount.Add(CurrentCount);
-					}
-				}
-			}
-		}
-	}
-
-	printf(XORSTRING("All arrays have been set-up!\n"));
 }
 
 static void InteractWith(PVOID Params)
@@ -1750,9 +1818,7 @@ static void InteractWith(PVOID Params)
 		};
 
 		auto ContainerBitField = reinterpret_cast<BitField*>(__int64(CurrentParams->ReceivingActor) + __int64(OffsetTable::bAlreadySearchedOffset));
-		ContainerBitField->bAlreadySearched = true;
-		OnRep_bAlreadySearched(CurrentParams->ReceivingActor);
-
+		
 		auto ContainerLocation = GetLocation(CurrentParams->ReceivingActor);
 		auto ContainerRotation = GetRotation(CurrentParams->ReceivingActor);
 
@@ -1764,54 +1830,58 @@ static void InteractWith(PVOID Params)
 		ForwardVector.Y = ForwardVector.Y * 64;
 		ContainerLocation = SumVectors(ContainerLocation, ForwardVector);
 
-		if (LootTierGroupString.find("Loot_Treasure") != string::npos)
-		{
-			ClientPlaySoundAtLocation(Globals::PlayerController, ChestsSound, ContainerLocation, 1, 1);
-
-			int WeaponRandomIndex = rand() % Globals::WeaponItemDefs.Num();
-			int ResourceRandomIndex = rand() % Globals::ResourceItemDefs.Num();
-			int ConsumableRandomIndex = rand() % Globals::ConsumablesItemDefs.Num();
-			SpawnPickupAtLocation(Globals::WeaponItemDefs[WeaponRandomIndex], Globals::WeaponItemCount[WeaponRandomIndex], ContainerLocation, true, 2, 3);
-			SpawnPickupAtLocation(Globals::ResourceItemDefs[ResourceRandomIndex], Globals::ResourceItemCount[ResourceRandomIndex], ContainerLocation, true, 2, 3);
-			SpawnPickupAtLocation(Globals::ConsumablesItemDefs[ConsumableRandomIndex], Globals::ConsumablesItemCount[ConsumableRandomIndex], ContainerLocation, true, 2, 3);
-
-			auto AmmoData = *(SoftObjectPtr*)(__int64(Globals::WeaponItemDefs[WeaponRandomIndex]) + OffsetTable::AmmoData);
-			if (OffsetTable::AmmoData > 0) {
-				auto CurrentAmmoData = SoftObjectPtrToObject(AmmoData);
-				for (auto i = 0; i < Globals::AmmoItemDefs.Num(); i++)
-				{
-					if (Globals::AmmoItemDefs[i] == CurrentAmmoData)
-					{
-						SpawnPickupAtLocation(Globals::AmmoItemDefs[i], Globals::AmmoItemCount[i], ContainerLocation, true, 2, 3);
-						break;
-					}
-				}
-			}
-		}
-		else if (LootTierGroupString.find("Loot_Ammo") != string::npos)
-		{
-			ClientPlaySoundAtLocation(Globals::PlayerController, AmmoBoxSound, ContainerLocation, 1, 1);
-
-			auto MinIndex = *(float*)(__int64(CurrentParams->ReceivingActor) + OffsetTable::NumItemsToDropRange);
-			auto MaxIndex = *(float*)(__int64(CurrentParams->ReceivingActor) + OffsetTable::NumItemsToDropRange + 4);
-
-			for (MinIndex; MinIndex < MaxIndex; MinIndex++)
+		//If statement to prevent a bug in 1.8
+		if (!ContainerBitField->bAlreadySearched) {
+			if (LootTierGroupString.find("Loot_Treasure") != string::npos)
 			{
-				while (true)
+				ClientPlaySoundAtLocation(Globals::PlayerController, ChestsSound, ContainerLocation, 1, 1);
+
+				int WeaponRandomIndex = rand() % Globals::WeaponItemDefs.Num();
+				int ResourceRandomIndex = rand() % Globals::ResourceItemDefs.Num();
+				int ConsumableRandomIndex = rand() % Globals::ConsumablesItemDefs.Num();
+				SpawnPickupAtLocation(Globals::WeaponItemDefs[WeaponRandomIndex], Globals::WeaponItemCount[WeaponRandomIndex], ContainerLocation, true, 2, 3);
+				SpawnPickupAtLocation(Globals::ResourceItemDefs[ResourceRandomIndex], Globals::ResourceItemCount[ResourceRandomIndex], ContainerLocation, true, 2, 3);
+				SpawnPickupAtLocation(Globals::ConsumablesItemDefs[ConsumableRandomIndex], Globals::ConsumablesItemCount[ConsumableRandomIndex], ContainerLocation, true, 2, 3);
+
+				auto AmmoData = *(SoftObjectPtr*)(__int64(Globals::WeaponItemDefs[WeaponRandomIndex]) + OffsetTable::AmmoData);
+				auto CurrentAmmoData = OffsetTable::AmmoData > 0 ? SoftObjectPtrToObject(AmmoData) : AssetPtrToObject(*(AssetPtr*)(__int64(Globals::WeaponItemDefs[WeaponRandomIndex]) + OffsetTable::AmmoData416));
+				for (auto j = 0; j < Globals::AmmoItemDefs.Num(); j++)
 				{
-					auto RandomIndex = rand() % Globals::AmmoItemDefs.Num();
-					if (Globals::LastItemDefinition != Globals::AmmoItemDefs[RandomIndex]) {
-						SpawnPickupAtLocation(Globals::AmmoItemDefs[RandomIndex], Globals::AmmoItemCount[RandomIndex], ContainerLocation, true, 2, 3);
-						Globals::LastItemDefinition = Globals::AmmoItemDefs[RandomIndex];
+					if (Globals::AmmoItemDefs[j] == CurrentAmmoData)
+					{
+						SpawnPickupAtLocation(Globals::AmmoItemDefs[j], Globals::AmmoItemCount[j], ContainerLocation, false, 0, 0, false);
 						break;
 					}
-					else
+				}
+
+			}
+			else if (LootTierGroupString.find("Loot_Ammo") != string::npos)
+			{
+				ClientPlaySoundAtLocation(Globals::PlayerController, AmmoBoxSound, ContainerLocation, 1, 1);
+
+				auto MinIndex = *(float*)(__int64(CurrentParams->ReceivingActor) + OffsetTable::NumItemsToDropRange);
+				auto MaxIndex = *(float*)(__int64(CurrentParams->ReceivingActor) + OffsetTable::NumItemsToDropRange + 4);
+
+				for (MinIndex; MinIndex < MaxIndex; MinIndex++)
+				{
+					while (true)
 					{
-						continue;
+						auto RandomIndex = rand() % Globals::AmmoItemDefs.Num();
+						if (Globals::LastItemDefinition != Globals::AmmoItemDefs[RandomIndex]) {
+							SpawnPickupAtLocation(Globals::AmmoItemDefs[RandomIndex], Globals::AmmoItemCount[RandomIndex], ContainerLocation, true, 2, 3);
+							Globals::LastItemDefinition = Globals::AmmoItemDefs[RandomIndex];
+							break;
+						}
+						else
+						{
+							continue;
+						}
 					}
 				}
 			}
 		}
+		ContainerBitField->bAlreadySearched = true;
+		OnRep_bAlreadySearched(CurrentParams->ReceivingActor);
 	}
 }
 
@@ -1882,6 +1952,8 @@ static void InventoryDrop(void* Params)
 				}
 
 				UpdateInventory();
+
+				
 			}
 		}
 	}
@@ -2322,7 +2394,6 @@ static void Emote(PVOID Params)
 	auto EmoteItemDefinition = *(UObject**)(Params);
 
 	auto Animation = GetAnimationHardReference(EmoteItemDefinition);
-	printf("Emoteasset: %s\n", SoftObjectPtrToObject(*(SoftObjectPtr*)(__int64(EmoteItemDefinition) + OffsetTable::EmoteAsset))->GetFullName().c_str());
 
 	if (Animation)
 	{
@@ -2532,49 +2603,51 @@ static void SpawnPickupsAthena_Terrain()
 	auto WarmupArray = ArrayFindActorsFromClass(UObject::GetObjectFromName(XORSTRING("BlueprintGeneratedClass Tiered_Athena_FloorLoot_Warmup.Tiered_Athena_FloorLoot_Warmup_C")));
 	auto AthenaArray = ArrayFindActorsFromClass(UObject::GetObjectFromName(XORSTRING("BlueprintGeneratedClass Tiered_Athena_FloorLoot_01.Tiered_Athena_FloorLoot_01_C")));
 
-	for (auto i = 0; i < WarmupArray.Num(); i++)
-	{
-		auto WeaponType = (rand() % 4) + 1;
-		switch (WeaponType)
+	if (WarmupArray.Data != nullptr) {
+		for (auto i = 0; i < WarmupArray.Num(); i++)
 		{
-		case 1:
-		{
-			auto WeaponIndex = rand() % Globals::WeaponItemDefs.Num();
-			auto CurrentPickup = SpawnPickupAtLocation(Globals::WeaponItemDefs[WeaponIndex], Globals::WeaponItemCount[WeaponIndex], GetLocation(WarmupArray[i]), false, 0, 0, false);
-			auto AmmoData = *(SoftObjectPtr*)(__int64(Globals::WeaponItemDefs[WeaponIndex]) + OffsetTable::AmmoData);
-			if (OffsetTable::AmmoData > 0) {
-				auto CurrentAmmoData = SoftObjectPtrToObject(AmmoData);
+			auto WeaponType = (rand() % 4) + 1;
+			switch (WeaponType)
+			{
+			case 1:
+			{
+				auto WeaponIndex = rand() % Globals::WeaponItemDefs.Num();
+				auto CurrentPickup = SpawnPickupAtLocation(Globals::WeaponItemDefs[WeaponIndex], Globals::WeaponItemCount[WeaponIndex], GetLocation(WarmupArray[i]), false, 0, 0, false);
+				auto AmmoData = *(SoftObjectPtr*)(__int64(Globals::WeaponItemDefs[WeaponIndex]) + OffsetTable::AmmoData);
+				auto CurrentAmmoData = OffsetTable::AmmoData > 0 ? SoftObjectPtrToObject(AmmoData) : AssetPtrToObject(*(AssetPtr*)(__int64(Globals::WeaponItemDefs[WeaponIndex]) + OffsetTable::AmmoData416));
 				for (auto j = 0; j < Globals::AmmoItemDefs.Num(); j++)
 				{
 					if (Globals::AmmoItemDefs[j] == CurrentAmmoData)
 					{
-						SpawnPickupAtLocation(Globals::AmmoItemDefs[j], Globals::AmmoItemCount[j], GetLocation(CurrentPickup), false, 0, 0, false);
+						auto CurrentLoc = GetLocation(CurrentPickup);
+						CurrentLoc.X += 40;
+						SpawnPickupAtLocation(Globals::AmmoItemDefs[j], Globals::AmmoItemCount[j], CurrentLoc, false, 0, 0, false);
 						break;
 					}
 				}
+				break;
 			}
-			break;
-		}
-		case 2:
-		{
-			auto ConsumableIndex = rand() % Globals::ConsumablesItemDefs.Num();
-			SpawnPickupAtLocation(Globals::ConsumablesItemDefs[ConsumableIndex], Globals::ConsumablesItemCount[ConsumableIndex], GetLocation(WarmupArray[i]), false, 0, 0, false);
-			break;
-		}
-		case 3:
-		{
-			if (Globals::TrapsItemDefs.Num() > 0) {
-				auto TrapsIndex = rand() % Globals::TrapsItemDefs.Num();
-				SpawnPickupAtLocation(Globals::TrapsItemDefs[TrapsIndex], Globals::TrapsItemCount[TrapsIndex], GetLocation(WarmupArray[i]), false, 0, 0, false);
+			case 2:
+			{
+				auto ConsumableIndex = rand() % Globals::ConsumablesItemDefs.Num();
+				SpawnPickupAtLocation(Globals::ConsumablesItemDefs[ConsumableIndex], Globals::ConsumablesItemCount[ConsumableIndex], GetLocation(WarmupArray[i]), false, 0, 0, false);
+				break;
 			}
-			break;
-		}
-		case 4:
-		{
-			auto ResourceIndex = rand() % Globals::ResourceItemDefs.Num();
-			SpawnPickupAtLocation(Globals::ResourceItemDefs[ResourceIndex], Globals::ResourceItemCount[ResourceIndex], GetLocation(WarmupArray[i]), false, 0, 0, false);
-			break;
-		}
+			case 3:
+			{
+				if (Globals::TrapsItemDefs.Num() > 0) {
+					auto TrapsIndex = rand() % Globals::TrapsItemDefs.Num();
+					SpawnPickupAtLocation(Globals::TrapsItemDefs[TrapsIndex], Globals::TrapsItemCount[TrapsIndex], GetLocation(WarmupArray[i]), false, 0, 0, false);
+				}
+				break;
+			}
+			case 4:
+			{
+				auto ResourceIndex = rand() % Globals::ResourceItemDefs.Num();
+				SpawnPickupAtLocation(Globals::ResourceItemDefs[ResourceIndex], Globals::ResourceItemCount[ResourceIndex], GetLocation(WarmupArray[i]), false, 0, 0, false);
+				break;
+			}
+			}
 		}
 	}
 	for (auto i = 0; i < AthenaArray.Num(); i++)
@@ -2587,15 +2660,15 @@ static void SpawnPickupsAthena_Terrain()
 			auto WeaponIndex = rand() % Globals::WeaponItemDefs.Num();
 			auto CurrentPickup = SpawnPickupAtLocation(Globals::WeaponItemDefs[WeaponIndex], Globals::WeaponItemCount[WeaponIndex], GetLocation(AthenaArray[i]), false, 0, 0, false);
 			auto AmmoData = *(SoftObjectPtr*)(__int64(Globals::WeaponItemDefs[WeaponIndex]) + OffsetTable::AmmoData);
-			if (OffsetTable::AmmoData > 0) {
-				auto CurrentAmmoData = SoftObjectPtrToObject(AmmoData);
-				for (auto j = 0; j < Globals::AmmoItemDefs.Num(); j++)
+			auto CurrentAmmoData = OffsetTable::AmmoData > 0 ? SoftObjectPtrToObject(AmmoData) : AssetPtrToObject(*(AssetPtr*)(__int64(Globals::WeaponItemDefs[WeaponIndex]) + OffsetTable::AmmoData416));
+			for (auto j = 0; j < Globals::AmmoItemDefs.Num(); j++)
+			{
+				if (Globals::AmmoItemDefs[j] == CurrentAmmoData)
 				{
-					if (Globals::AmmoItemDefs[j] == CurrentAmmoData)
-					{
-						SpawnPickupAtLocation(Globals::AmmoItemDefs[j], Globals::AmmoItemCount[j], GetLocation(CurrentPickup), false, 0, 0, false);
-						break;
-					}
+					auto CurrentLoc = GetLocation(CurrentPickup);
+					CurrentLoc.X += 40;
+					SpawnPickupAtLocation(Globals::AmmoItemDefs[j], Globals::AmmoItemCount[j], CurrentLoc, false, 0, 0, false);
+					break;
 				}
 			}
 			break;
@@ -2622,6 +2695,16 @@ static void SpawnPickupsAthena_Terrain()
 		}
 		}
 	}
+}
+
+static void InitializeClasses()
+{
+	classes::PlayerPawnClass = UObject::GetObjectFromName(XORSTRING("BlueprintGeneratedClass PlayerPawn_Athena.PlayerPawn_Athena_C"));
+}
+
+static void InitializeFunctions()
+{
+
 }
 
 #endif // !GAMEFUNCTIONS_H
