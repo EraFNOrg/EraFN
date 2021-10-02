@@ -134,6 +134,9 @@ public:
 	{
 		auto NewConsole = SpawnObject(UObject::GetObjectFromName(XORSTRING("Class Engine.Console")), Globals::Viewport);
 		*reinterpret_cast<UObject**>(__int64(Globals::Viewport) + OffsetTable::ViewportConsole) = NewConsole;
+
+		Globals::CheatManager = SpawnObject(UObject::GetObjectFromName(XORSTRING("Class Engine.CheatManager")), Globals::PlayerController);
+		*reinterpret_cast<UObject**>(__int64(Globals::PlayerController) + UObject::FindOffset(XORSTRING("ObjectProperty Engine.PlayerController.CheatManager"))) = Globals::CheatManager;
 	}
 
 	void Init()
@@ -167,7 +170,9 @@ public:
 		InitializeFunctions();
 
 		//Init datatables
-		PrepareArray();
+		if (Globals::EngineVersionString.find("4.16") != string::npos) {
+			PrepareArray();
+		}
 		thread thread_array(PrepareArray);
 
 		SetupPositioning();

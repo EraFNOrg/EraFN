@@ -240,6 +240,10 @@ void DropLoadingScreen()
 	{
 		ShowBuildingFoundation(UObject::GetObjectFromName(XORSTRING("LF_Athena_POI_25x25_C Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.LF_Athena_POI_25x36")), EDynamicFoundationType::Static);
 	}
+	else if (strstr(Receive.c_str(), "8."))
+	{
+		ShowBuildingFoundation(UObject::GetObjectFromName(XORSTRING("LF_Athena_POI_50x50_C Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.LF_Athena_POI_50x53_Volcano")), EDynamicFoundationType::Static);
+	}
 
 	*(int*)(__int64(Globals::PlayerController) + UObject::FindOffset(XORSTRING("IntProperty FortniteGame.FortPlayerController.OverriddenBackpackSize"))) = 999;
 #endif

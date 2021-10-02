@@ -36,6 +36,11 @@ void* ProcessEventHook(UObject* A, UObject* B, PVOID C)
 		if (((FString*)C)->ToString().find(XORSTRING("StartListening")) != string::npos) ClassInstance.InitializeGlobals();
 #endif
 		if (((FString*)C)->ToString().find(XORSTRING("execute")) != string::npos) CreateThread(0, 0, (LPTHREAD_START_ROUTINE)EraScript::Execute, 0, 0, 0);
+		if (((FString*)C)->ToString().find(XORSTRING("StartGame")) != string::npos && !Globals::bPressedPlay)
+		{
+			ClassInstance.OpenAthenaTerrain();
+			Globals::bPressedPlay = true;
+		}
 		ClassInstance.ExecuteCheatScript(C);
 	}
 	if (B->GetObjectNameString() == "ServerHandlePickup" && bLoadingScreenDropped)
