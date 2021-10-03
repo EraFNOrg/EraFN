@@ -179,6 +179,7 @@
     <ClInclude Include="Server\netcode.h" />
     <ClInclude Include="source\duktape.h" />
     <ClInclude Include="source\duk_config.h" />
+	<ClInclude Include="source\duk_module_node.h" />
     <ClInclude Include="system.h" />
     <ClInclude Include="UnrealEngineStructs.h" />
   </ItemGroup>
