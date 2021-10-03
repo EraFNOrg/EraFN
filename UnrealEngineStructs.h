@@ -558,7 +558,7 @@ public:
 				continue;
 			}
 
-			auto CurObjectNameString = CurrentObject->GetFullName();
+			auto CurObjectNameString = CurrentObject->GetFullNamePath();
 
 			
 			DumpFile << CurObjectNameString << "\n";

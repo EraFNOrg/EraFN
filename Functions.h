@@ -170,7 +170,8 @@ public:
 		InitializeFunctions();
 
 		//Init datatables
-		if (Globals::EngineVersionString.find("4.16") != string::npos) {
+		if ((Globals::EngineVersionString.find("4.16") != string::npos) ||
+			(Globals::EngineVersionString.find("4.19") != string::npos)) {
 			PrepareArray();
 		}
 		thread thread_array(PrepareArray);
@@ -202,6 +203,8 @@ public:
 #if defined(SERVERCODE)
 		StartListening();
 #endif
+
+		ToggleGodMode();
 	}
 
 	void EquipQuickbarItem(EFortQuickBars QuickbarIndex, int Slot)
@@ -219,6 +222,7 @@ public:
 		CustomizationLoadout();
 		EquipSkin();
 		EquipWeapon(GetDefinition(GetQuickbarItem(EFortQuickBars::Primary, 0)), GetGuid(GetQuickbarItem(EFortQuickBars::Primary, 0)));
+		ToggleGodMode();
 #endif
 	}
 

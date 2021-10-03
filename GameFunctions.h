@@ -1697,7 +1697,20 @@ static void PrepareArray()
 		static auto deco = UObject::GetObjectFromName(XORSTRING("Class FortniteGame.FortDecoItemDefinition"));
 		static auto resource = UObject::GetObjectFromName(XORSTRING("Class FortniteGame.FortResourceItemDefinition"));
 
-		Globals::AthenaLoot = UObject::GetObjectFromName(XORSTRING("DataTable AthenaLootPackages_Client.AthenaLootPackages_Client"));
+		auto OnRep_CurrentPlaylistData = UObject::GetObjectFromName(XORSTRING("Function FortniteGame.FortGameStateAthena.OnRep_CurrentPlaylistData"));
+		auto OnRep_CurrentPlaylistInfo = UObject::GetObjectFromName(XORSTRING("Function FortniteGame.FortGameStateAthena.OnRep_CurrentPlaylistInfo"));
+
+		if (OnRep_CurrentPlaylistData)
+		{
+			auto Playlist = *(UObject**)(__int64(Globals::GameState) + UObject::FindOffset(XORSTRING("ObjectProperty FortniteGame.FortGameStateAthena.CurrentPlaylistData")));
+			Globals::AthenaLoot = SoftObjectPtrToObject(*(SoftObjectPtr*)(__int64(Playlist) + UObject::FindOffset(XORSTRING("SoftObjectProperty FortniteGame.FortPlaylist.LootPackages"))));
+		}
+		else if (OnRep_CurrentPlaylistInfo)
+		{
+			auto Playlist = *reinterpret_cast<UObject**>(__int64(Globals::GameState) + UObject::FindOffset(XORSTRING("StructProperty FortniteGame.FortGameStateAthena.CurrentPlaylistInfo")) + UObject::FindOffset(XORSTRING("ObjectProperty FortniteGame.PlaylistPropertyArray.BasePlaylist")));
+			Globals::AthenaLoot = SoftObjectPtrToObject(*(SoftObjectPtr*)(__int64(Playlist) + UObject::FindOffset(XORSTRING("SoftObjectProperty FortniteGame.FortPlaylist.LootPackages"))));
+		}
+
 		if (!Globals::AthenaLoot)
 		{
 			string Path = XORSTRING("/Game/Items/Datatables/AthenaLootPackages_Client");
@@ -2733,6 +2746,13 @@ static void InitializeClasses()
 static void InitializeFunctions()
 {
 
+}
+
+static void ToggleGodMode()
+{
+	static auto fn = UObject::GetObjectFromName(XORSTRING("Function Engine.CheatManager.God"));
+
+	if (fn) Globals::ProcessEvent(Globals::CheatManager, fn, nullptr);
 }
 
 #endif // !GAMEFUNCTIONS_H
