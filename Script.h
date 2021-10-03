@@ -152,6 +152,9 @@ namespace EraScript {
 		duk_push_c_function(ctx, duk_playsound, DUK_VARARGS);
 		duk_put_global_string(ctx, XORSTRING("playSound"));
 
+                duk_push_c_function(ctx, duk_getlocalplayer, DUK_VARARGS);
+		duk_put_global_string(ctx, XORSTRING("getLocalPlayer"));
+
 		// GLOBAL VARIABLES
 
 		duk_push_tarray(ctx, &Globals::AmmoItemCount);
@@ -183,9 +186,6 @@ namespace EraScript {
 
 		duk_push_tarray(ctx, &Globals::WeaponItemDefs);
 		duk_put_global_string(ctx, XORSTRING("weaponItemDefs"));
-
-		duk_push_pointer(ctx, &Globals::PlayerPawn);
-		duk_put_global_string(ctx, XORSTRING("localPlayer"));
 
 		duk_push_pointer(ctx, &Globals::GameMode);
 		duk_put_global_string(ctx, XORSTRING("gameMode"));
