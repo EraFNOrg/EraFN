@@ -298,7 +298,8 @@ void FixSpawnForCH1()
 	void* Result;
 	string Receive = EngineVersion::GetVersion(&Result);
 
-	if (strstr(Receive.c_str(), "8.") ||
+	if (strstr(Receive.c_str(), "4.2") ||
+		strstr(Receive.c_str(), "8.") ||
 		strstr(Receive.c_str(), "9.") ||
 		strstr(Receive.c_str(), "10."))
 	{

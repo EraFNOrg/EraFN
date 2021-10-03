@@ -109,6 +109,7 @@ namespace EraInit
 		if (Globals::CurrentEngineVersion == EEngineVersion::UE_NONE)
 		{
 			GObjectsAddress = FindPattern(XORSTRING("48 8B 05 ? ? ? ? 48 8D 1C C8 81 4B ? ? ? ? ? 49 63 76 30"));
+			if (!GObjectsAddress) GObjectsAddress = FindPattern(XORSTRING("48 8B 05 ? ? ? ? 48 8D 14 C8 EB 03"));
 			ToStringAddress = FindPattern(XORSTRING("48 89 5C 24 ? 57 48 83 EC 40 83 79 04 00 48 8B DA 48 8B F9"));
 			SpawnActorFromClassAddress = FindPattern(XORSTRING("40 53 56 57 48 83 EC 70 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 ? 0F 28 1D ? ? ? ? 0F 57 D2 48 8B B4 24 ? ? ? ? 0F 28 CB"));
 			FreeAddress = FindPattern(XORSTRING("48 85 C9 74 1D 4C 8B 05 ? ? ? ? 4D 85 C0"));
