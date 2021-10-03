@@ -623,7 +623,31 @@ void ServerChoosePart(TEnumAsByte<EFortCustomPartType> Type, UObject* Part, UObj
 	params.Part = Type;
 	params.ChosenCharacterPart = Part;
 
-	Globals::ProcessEvent(Target, ServerChoosePart, &params);
+	static auto FortHero = UObject::GetObjectFromName("FortHero Transient.FortHero_");;
+	auto HeroCharacterParts = reinterpret_cast<TArray<UObject*>*>(reinterpret_cast<uintptr_t>(FortHero) + OffsetTable::CharacterParts);
+
+	if (ServerChoosePart) Globals::ProcessEvent(Target, ServerChoosePart, &params);
+	else
+	{
+		switch (Type)
+		{
+		case EFortCustomPartType::Body:
+		{
+			HeroCharacterParts->operator[](0) = Part;
+			break;
+		}
+		case EFortCustomPartType::Head:
+		{
+			HeroCharacterParts->operator[](1) = Part;
+			break;
+		}
+		case EFortCustomPartType::Hat:
+		{
+			HeroCharacterParts->operator[](2) = Part;
+			break;
+		}
+		}
+	}
 }
 
 void SetHealth(UObject* Target, float Value)
@@ -690,9 +714,8 @@ void EquipSkin()
 	}
 
 	if (UObject::FindOffset(XORSTRING("ObjectProperty FortniteGame.FortAthenaLoadout.Backpack")) > 0) {
-		auto BID = *(UObject**)(__int64(Globals::PlayerController) +
-			UObject::FindOffset(XORSTRING("StructProperty FortniteGame.FortPlayerControllerAthena.CustomizationLoadout")) +
-			UObject::FindOffset(XORSTRING("ObjectProperty FortniteGame.FortAthenaLoadout.Backpack")));
+		auto BID = OffsetTable::CustomizationLoadout > 0 ? *(UObject**)(__int64(Globals::PlayerController) + OffsetTable::CustomizationLoadout + UObject::FindOffset(XORSTRING("ObjectProperty FortniteGame.FortAthenaLoadout.Backpack"))) :
+			*(UObject**)(__int64(Globals::PlayerController) + UObject::FindOffset(XORSTRING("StructProperty FortniteGame.FortPlayerController.CosmeticLoadoutPC")) + UObject::FindOffset(XORSTRING("ObjectProperty FortniteGame.FortAthenaLoadout.Backpack")));
 
 		TArray<UObject*> BackPackArray;
 
@@ -794,9 +817,9 @@ FVector GetLocation(UObject* Target)
 
 	GetLocation_Params params;
 
-	Globals::ProcessEvent(Target, GetLocation, & params);
+	Globals::ProcessEvent(Target, GetLocation, &params);
 
-	if (!IsBadReadPtr(&params.ReturnValue))
+	if (Target && !IsBadReadPtr(&params.ReturnValue))
 	{
 		return params.ReturnValue;
 	}

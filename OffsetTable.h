@@ -56,7 +56,6 @@ namespace OffsetTable {
 	int MinimapFifthBrush = 0;
 	int MinimapSixthBrush = 0;
 	int MinimapSeventhBrush = 0;
-	int StrongMyHero = 0;
 	int CharacterParts = 0;
 	int AdditionalData = 0;
 	int SprintingBool = 0;
@@ -108,6 +107,7 @@ namespace OffsetTable {
 	int ItemDefinitionLoot416 = 0;
 	int CountLoot = 0;
 	int Weight = 0;
+	int StrongMyHero = 0;
 	PBYTE SpawnActor = 0;
 
 	//EGS

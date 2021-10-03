@@ -257,16 +257,17 @@ public:
 			}
 		}
 
-		if (!Globals::OutsideSafezone && *(bool*)(__int64(Globals::PlayerPawn) + OffsetTable::bIsOutsideSafezone) && Globals::DroppedLS)
+		//NOT REALLY NEEDED
+		/*if (!Globals::OutsideSafezone && *(bool*)(__int64(Globals::PlayerPawn) + OffsetTable::bIsOutsideSafezone) && Globals::DroppedLS)
 		{
 			OnRep_bIsOutsideSafezone();
 		}
 		else if (Globals::OutsideSafezone && !*(bool*)(__int64(Globals::PlayerPawn) + OffsetTable::bIsOutsideSafezone) && Globals::DroppedLS)
 		{
 			OnRep_bIsOutsideSafezone();
-		}
+		}*/
 
-		if (IsInBuildMode() && !strstr(Globals::CurrentFortniteVersion.c_str(), "3.") &&
+		if (IsInBuildMode() && !bIsInEditMode() && !strstr(Globals::CurrentFortniteVersion.c_str(), "3.") &&
 			(Globals::EngineVersionString.find("4.16") == string::npos &&
 				Globals::EngineVersionString.find("4.19") == string::npos))
 		{
@@ -293,12 +294,10 @@ public:
 						}
 					}
 
-					if (!bIsInEditMode()) {
-						auto BuildingActor = SpawnActorFromClassObj(CurrentBuildableClass, LastPreviewLocation, LastPreviewRotation);
-						Globals::BuildingActorLast = BuildingActor;
-						Globals::LastClass = CurrentBuildableClass;
-						InitializeBuildingActor(BuildingActor);
-					}
+					auto BuildingActor = SpawnActorFromClassObj(CurrentBuildableClass, LastPreviewLocation, LastPreviewRotation);
+					Globals::BuildingActorLast = BuildingActor;
+					Globals::LastClass = CurrentBuildableClass;
+					InitializeBuildingActor(BuildingActor);
 				}
 			}
 		}
