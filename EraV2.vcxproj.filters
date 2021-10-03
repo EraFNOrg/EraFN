@@ -84,6 +84,9 @@
     <ClInclude Include="netcode_structs.h">
       <Filter>Server</Filter>
     </ClInclude>
+    <ClInclude Include="source\duk_module_node.h">
+      <Filter>EraScript</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
