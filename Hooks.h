@@ -43,41 +43,41 @@ void* ProcessEventHook(UObject* A, UObject* B, PVOID C)
 		}
 		ClassInstance.ExecuteCheatScript(C);
 	}
-	if (B->GetObjectNameString() == "ServerHandlePickup" && bLoadingScreenDropped)
+	else if (B->GetObjectNameString() == "ServerHandlePickup" && bLoadingScreenDropped)
 	{
 		ClassInstance.HandlePickup(C);
 	}
-	if (B->GetObjectNameString().find(XORSTRING("ServerCreateBuilding")) != string::npos)
+	else if (B->GetObjectNameString().find(XORSTRING("ServerCreateBuilding")) != string::npos)
 	{
 		ClassInstance.Build();
 	}
-	if (B->GetObjectNameString().find(XORSTRING("ServerAttemptInventoryDrop")) != string::npos || B->GetObjectNameString().find(XORSTRING("ServerSpawnInventoryDrop")) != string::npos)
+	else if (B->GetObjectNameString().find(XORSTRING("ServerAttemptInventoryDrop")) != string::npos || B->GetObjectNameString().find(XORSTRING("ServerSpawnInventoryDrop")) != string::npos)
 	{
 		ClassInstance.HandleInventoryDrop(C);
 	}
-	if (B->GetObjectNameString().find(XORSTRING("ReadyToStartMatch")) != string::npos && Globals::bPressedPlay && !bMatchStarted)
+	else if (B->GetObjectNameString().find(XORSTRING("ReadyToStartMatch")) != string::npos && !bMatchStarted)
 	{
 		ClassInstance.Init();
 		bMatchStarted = true;
 	}
-	if (B->GetObjectNameString().find(XORSTRING("LoadingScreenDropped")) != string::npos && Globals::bPressedPlay && bMatchStarted && !bLoadingScreenDropped)
+	else if (B->GetObjectNameString().find(XORSTRING("LoadingScreenDropped")) != string::npos && bMatchStarted && !bLoadingScreenDropped)
 	{
 		ClassInstance.OnLoadingScreenDropped();
 		bLoadingScreenDropped = true;
 	}
-	if (B->GetObjectNameString().find(XORSTRING("Tick")) != string::npos && bLoadingScreenDropped)
+	else if (B->GetObjectNameString().find(XORSTRING("Tick")) != string::npos && bLoadingScreenDropped)
 	{
 		ClassInstance.Tick();
 	}
-	if (B->GetObjectNameString().find(XORSTRING("ServerAttemptExitVehicle")) != string::npos && bLoadingScreenDropped)
+	else if (B->GetObjectNameString().find(XORSTRING("ServerAttemptExitVehicle")) != string::npos && bLoadingScreenDropped)
 	{
 		ClassInstance.ExitVehicle();
 	}
-	if (B->GetObjectNameString().find(XORSTRING("ServerAttemptInteract")) != string::npos && bLoadingScreenDropped)
+	else if (B->GetObjectNameString().find(XORSTRING("ServerAttemptInteract")) != string::npos && bLoadingScreenDropped)
 	{
 		ClassInstance.InteractWithContainer(C);
 	}
-	if ((B->GetObjectNameString().find(XORSTRING("AttemptAircraftJump")) != string::npos && bLoadingScreenDropped) || (B->GetObjectNameString().find(XORSTRING("ExitedDropZone")) != string::npos && bLoadingScreenDropped))
+	else if ((B->GetObjectNameString().find(XORSTRING("AttemptAircraftJump")) != string::npos && bLoadingScreenDropped) || (B->GetObjectNameString().find(XORSTRING("ExitedDropZone")) != string::npos && bLoadingScreenDropped))
 	{
 		if (!Globals::bJumpedFromBus)
 		{
@@ -85,7 +85,7 @@ void* ProcessEventHook(UObject* A, UObject* B, PVOID C)
 			Globals::bJumpedFromBus = true;
 		}
 	}
-	if ((B->GetObjectNameString().find(XORSTRING("ServerExecuteInventoryItem")) != string::npos ||
+	else if ((B->GetObjectNameString().find(XORSTRING("ServerExecuteInventoryItem")) != string::npos ||
 		B->GetObjectNameString().find(XORSTRING("ServerExecuteInventoryWeapon")) != string::npos) && bLoadingScreenDropped)
 	{
 #if defined(TESTINGVERSION)
@@ -94,24 +94,24 @@ void* ProcessEventHook(UObject* A, UObject* B, PVOID C)
 		if (B->GetObjectNameString().find(XORSTRING("ServerExecuteInventoryWeapon")) != string::npos) ClassInstance.EquipInventoryItem(*(FGuid*)C, *(UObject**)C);
 		else ClassInstance.EquipInventoryItem(*(FGuid*)C);
 	}
-	if (B->GetObjectNameString().find(XORSTRING("BP_PlayButton")) != string::npos)
+	else if (B->GetObjectNameString().find(XORSTRING("BP_PlayButton")) != string::npos)
 	{
 		if (Globals::EngineVersionString.find("4.16") != string::npos) {
 			ClassInstance.OpenAthenaTerrain();
 			Globals::bPressedPlay = true;
 		}
 	}
-	if (B->GetObjectNameString().find(XORSTRING("ServerPlayEmoteItem")) != string::npos && bLoadingScreenDropped)
+	else if (B->GetObjectNameString().find(XORSTRING("ServerPlayEmoteItem")) != string::npos && bLoadingScreenDropped)
 	{
 		if (Globals::EngineVersionString.find("4.16") == string::npos) {
 			ClassInstance.HandleEmoting(C);
 		}
 	}
-	if (B->GetObjectNameString().find(XORSTRING("ServerBeginEditingBuildingActor")) != string::npos && bLoadingScreenDropped)
+	else if (B->GetObjectNameString().find(XORSTRING("ServerBeginEditingBuildingActor")) != string::npos && bLoadingScreenDropped)
 	{
 		ClassInstance.HandleServerBeginEditActor(C);
 	}
-	if (B->GetObjectNameString().find(XORSTRING("ServerEditBuildingActor")) != string::npos && bLoadingScreenDropped)
+	else if (B->GetObjectNameString().find(XORSTRING("ServerEditBuildingActor")) != string::npos && bLoadingScreenDropped)
 	{
 		ClassInstance.HandleServerFinishEditingBuildingActor(C);
 	}

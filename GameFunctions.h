@@ -624,7 +624,7 @@ void ServerChoosePart(TEnumAsByte<EFortCustomPartType> Type, UObject* Part, UObj
 	params.Part = Type;
 	params.ChosenCharacterPart = Part;
 
-	static auto FortHero = UObject::GetObjectFromName("FortHero Transient.FortHero_");;
+	static auto FortHero = UObject::GetObjectFromName(XORSTRING("FortHero Transient.FortHero_"));
 	auto HeroCharacterParts = reinterpret_cast<TArray<UObject*>*>(reinterpret_cast<uintptr_t>(FortHero) + OffsetTable::CharacterParts);
 
 	if (ServerChoosePart) Globals::ProcessEvent(Target, ServerChoosePart, &params);
@@ -681,7 +681,7 @@ void EquipSkin()
 
 	std::vector<UObject*> CharacterPartsArray;
 
-	static auto FortHero = UObject::GetObjectFromName("FortHero Transient.FortHero_");
+	static auto FortHero = UObject::GetObjectFromName(XORSTRING("FortHero Transient.FortHero_"));
 	auto HeroCharacterParts = *reinterpret_cast<TArray<UObject*>*>(reinterpret_cast<uintptr_t>(FortHero) + OffsetTable::CharacterParts);
 
 	for (auto i = 0; i < HeroCharacterParts.Num(); i++)
