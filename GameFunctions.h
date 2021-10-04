@@ -658,7 +658,8 @@ void EquipSkin()
 
 	std::vector<UObject*> CharacterPartsArray;
 
-	static auto FortHero = *(UObject**)(__int64(Globals::PlayerController) + OffsetTable::StrongMyHero);
+	auto FortHero = *(UObject**)(__int64(Globals::PlayerController) + OffsetTable::StrongMyHero);
+	if (!FortHero) FortHero = UObject::GetObjectFromName(XORSTRING("FortHero Transient.FortHero_"));
 	auto HeroCharacterParts = *reinterpret_cast<TArray<UObject*>*>(reinterpret_cast<uintptr_t>(FortHero) + OffsetTable::CharacterParts);
 
 	for (auto i = 0; i < HeroCharacterParts.Num(); i++)
@@ -1665,6 +1666,30 @@ FString FloatToString(float var)
 	return params.out;
 }
 
+static void PrepareGItemDefs()
+{
+	static auto ammo = UObject::GetObjectFromName(XORSTRING("Class FortniteGame.FortAmmoItemDefinition"));
+	static auto weaponranged = UObject::GetObjectFromName(XORSTRING("Class FortniteGame.FortWeaponRangedItemDefinition"));
+	static auto deco = UObject::GetObjectFromName(XORSTRING("Class FortniteGame.FortDecoItemDefinition"));
+	static auto resource = UObject::GetObjectFromName(XORSTRING("Class FortniteGame.FortResourceItemDefinition"));
+
+	int ObjectCount = NewGObjectsPointer ? NewGObjectsPointer->ObjectCount : GObjectsPointer->ObjObjects.NumElements;
+
+	for (auto i = 0; i < ObjectCount; i++)
+	{
+		UObject* CurrentObject = NewGObjectsPointer ? FindObjectById(i) : GObjectsPointer->ObjObjects.GetByIndex(i);
+
+		if (!CurrentObject) continue;
+
+		if (CurrentObject->IsA(ammo) ||
+			CurrentObject->IsA(weaponranged) ||
+			CurrentObject->IsA(resource))
+		{
+			Globals::GItemDefs.Add(CurrentObject);
+		}
+	}
+}
+
 static void PrepareArray()
 {
 	if (!Globals::bPreparedLootArrays) {
@@ -1726,7 +1751,7 @@ static void PrepareArray()
 				{
 					if (stoi(Weight[i].ToString()) > 0)
 					{
-						auto CurrentItemDef = UObject::GetObjectFromName(ItemDefinitions[i].ToString(), false, true);
+						auto CurrentItemDef = UObject::GetObjectFromName(ItemDefinitions[i].ToString(), false, true, true, Globals::GItemDefs);
 						if (CurrentItemDef) {
 							auto CurrentCount = stoi(Count[i].ToString());
 							if (CurrentItemDef->IsA(ammo))
@@ -1771,7 +1796,7 @@ static void PrepareArray()
 			{
 				if (stoi(Weight[i].ToString()) > 0)
 				{
-					auto CurrentItemDef = UObject::GetObjectFromName(ItemDefinitions[i].ToString(), false, true);
+					auto CurrentItemDef = UObject::GetObjectFromName(ItemDefinitions[i].ToString(), false, true, true, Globals::GItemDefs);
 					if (CurrentItemDef) {
 						auto CurrentCount = stoi(Count[i].ToString());
 						if (CurrentItemDef->IsA(ammo))

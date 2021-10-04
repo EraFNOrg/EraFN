@@ -466,8 +466,25 @@ public:
 		return temp;
 	}
 
-	static UObject* GetObjectFromName(string ObjectName, bool Equal = false, bool busePath = false)
+	static UObject* GetObjectFromName(string ObjectName, bool Equal = false, bool busePath = false, bool bUseCustomArray = false, TArray<UObject*> CustomArray = TArray<UObject*>::TArray())
 	{
+		if (bUseCustomArray)
+		{
+			for (auto i = 0; i < CustomArray.Num(); i++)
+			{
+				if (busePath)
+				{
+					if (CustomArray[i]->GetFullNamePath().find(ObjectName) != string::npos) return CustomArray[i];
+				}
+				else
+				{
+					if (CustomArray[i]->GetFullName().find(ObjectName) != string::npos) return CustomArray[i];
+				}
+			}
+
+			return nullptr;
+		}
+
 		int ObjectCount = NewGObjectsPointer ? NewGObjectsPointer->ObjectCount : GObjectsPointer->ObjObjects.NumElements;
 
 		for (auto i = 0; i < ObjectCount; i++)

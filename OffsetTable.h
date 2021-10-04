@@ -184,6 +184,7 @@ namespace Globals
 	UObject* GameplayEffectClass;
 
 	//looting
+	TArray<UObject*> GItemDefs;
 	UObject* DataTableLibrary;
 	UObject* AthenaLoot;
 	TArray<UObject*> AmmoItemDefs;

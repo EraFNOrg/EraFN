@@ -155,8 +155,9 @@ public:
 		DestroyLods();
 		SetName();
 		CustomizationLoadout();
-		EquipPickaxe();
 		SetupBuildingPreviews();
+		InitializeClasses();
+		PrepareGItemDefs();
 #endif
 		DropLoadingScreen();
 #ifndef SERVERCODE
@@ -167,20 +168,19 @@ public:
 	void OnLoadingScreenDropped()
 	{
 		EquipSkin();
-
-		InitializeClasses();
-		InitializeFunctions();
+		EquipPickaxe();
 
 		//Init datatables
 		if ((Globals::EngineVersionString.find("4.16") != string::npos) ||
 			(Globals::EngineVersionString.find("4.19") != string::npos)) {
 			PrepareArray();
 		}
-		thread thread_array(PrepareArray);
 
-		SetupPositioning();
+		thread thread_array(PrepareArray);
+		thread thread_positioning (SetupPositioning);
+
 #ifndef SERVERCODE
-		Inventory();
+		thread thread_inventory (Inventory);
 		HideNetDebugUI();
 		GrantDefaultAbilities();
 #endif
@@ -191,10 +191,14 @@ public:
 		Globals::DroppedLS = true;
 
 #ifndef SERVERCODE
+		//WAIT FOR THREADS TO FINISH TO DROP LS
 		thread_array.join();
 		thread thread_pickups(SpawnPickupsAthena_Terrain);
 
 		thread_pickups.join();
+		thread_positioning.join();
+		thread_inventory.join();
+
 		EquipWeapon(GetDefinition(GetQuickbarItem(EFortQuickBars::Primary, 0)), GetGuid(GetQuickbarItem(EFortQuickBars::Primary, 0)));
 		FixSpawnForCH1();
 #endif
