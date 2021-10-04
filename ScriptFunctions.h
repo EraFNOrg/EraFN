@@ -306,4 +306,12 @@ static duk_ret_t duk_playsound(duk_context* ctx)
 	return 0;
 }
 
+
+//UObject* getLocalPlayer()
+static duk_ret_t duk_getlocalplayer(duk_context* ctx)
+{
+    duk_push_pointer(ctx, Globals::PlayerPawn);
+    return 1;
+}
+
 #endif // SCRIPTFUNCTIONS_H
