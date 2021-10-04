@@ -108,6 +108,7 @@ namespace OffsetTable {
 	int CountLoot = 0;
 	int Weight = 0;
 	int StrongMyHero = 0;
+	int bPlayDestructionEffects = 0;
 	PBYTE SpawnActor = 0;
 
 	//EGS

@@ -84,6 +84,7 @@ public:
 		OffsetTable::ItemDefinitionLoot416 = UObject::FindOffset(XORSTRING("AssetObjectProperty FortniteGame.FortLootPackageData.ItemDefinition"));
 		OffsetTable::CountLoot = UObject::FindOffset(XORSTRING("IntProperty FortniteGame.FortLootPackageData.Count"));
 		OffsetTable::Weight = UObject::FindOffset(XORSTRING("FloatProperty FortniteGame.FortLootPackageData.Weight"));
+		OffsetTable::bPlayDestructionEffects = UObject::FindOffset(XORSTRING("BoolProperty FortniteGame.BuildingSMActor.bPlayDestructionEffects"));
 #ifdef SERVERCODE
 		OffsetTable::ClientConnectionsOffset = UObject::FindOffset(XORSTRING("ArrayProperty Engine.NetDriver.ClientConnections"));
 		OffsetTable::NetDriverWorld = UObject::FindOffset(XORSTRING("ObjectProperty Engine.NetDriver.World"));
@@ -150,7 +151,6 @@ public:
 #endif
 		Possess();
 #ifndef SERVERCODE
-		EquipSkin();
 		MiniMap();
 		DestroyLods();
 		SetName();
@@ -166,6 +166,8 @@ public:
 
 	void OnLoadingScreenDropped()
 	{
+		EquipSkin();
+
 		InitializeClasses();
 		InitializeFunctions();
 
@@ -261,9 +263,10 @@ public:
 			}
 		}
 
-		if (IsInBuildMode() && !bIsInEditMode() && !strstr(Globals::CurrentFortniteVersion.c_str(), "3.") &&
+		if (IsInBuildMode() && !strstr(Globals::CurrentFortniteVersion.c_str(), "3.") &&
 			(Globals::EngineVersionString.find("4.16") == string::npos &&
-				Globals::EngineVersionString.find("4.19") == string::npos))
+				Globals::EngineVersionString.find("4.19") == string::npos) &&
+			!bIsInEditMode())
 		{
 			if (Globals::BuildingOffset != 0)
 			{

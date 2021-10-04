@@ -540,6 +540,26 @@ public:
 
 		return 0;
 	}
+	
+	static int FindBitFieldOffset(std::string OffsetToFind)
+	{
+		auto Object = GetObjectFromName(OffsetToFind, true);
+
+		if (Object)
+		{
+			__int8 ByteMask = *(__int8*)(__int64(Object) + 0x72);
+			if (ByteMask == 1) return 0;
+			else if (ByteMask == 2) return 1;
+			else if (ByteMask == 4) return 2;
+			else if (ByteMask == 8) return 3;
+			else if (ByteMask == 16) return 4;
+			else if (ByteMask == 32) return 5;
+			else if (ByteMask == 64) return 6;
+			else if (ByteMask == 128) return 7;
+		}
+
+		return 0;
+	}
 
 	static void DumpObjects()
 	{
