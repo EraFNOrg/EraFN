@@ -79,6 +79,7 @@ namespace EraScript {
 	}
 
 	static void Init() {
+#ifndef SERVERCODE
 		duk_context* ctx = duk_create_heap(0, 0, 0, 0, ErrorHandler);
 		Globals::DukContext = ctx;
 
@@ -195,6 +196,7 @@ namespace EraScript {
 
 		duk_push_string(ctx, Globals::CurrentFortniteVersion.c_str());
 		duk_put_global_string(ctx, XORSTRING("fortniteVersion"));
+#endif
 	}
 }
 

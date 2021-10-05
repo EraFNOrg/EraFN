@@ -131,45 +131,31 @@ public:
 		SwitchLevel();
 	}
 
-	void HandleInitializeConsole()
-	{
-		auto NewConsole = SpawnObject(UObject::GetObjectFromName(XORSTRING("Class Engine.Console")), Globals::Viewport);
-		*reinterpret_cast<UObject**>(__int64(Globals::Viewport) + OffsetTable::ViewportConsole) = NewConsole;
-
-		Globals::CheatManager = SpawnObject(UObject::GetObjectFromName(XORSTRING("Class Engine.CheatManager")), Globals::PlayerController);
-		*reinterpret_cast<UObject**>(__int64(Globals::PlayerController) + UObject::FindOffset(XORSTRING("ObjectProperty Engine.PlayerController.CheatManager"))) = Globals::CheatManager;
-	}
-
 	void Init()
 	{
 		InitializeGlobals();
 		InitializeObjects();
+
 #if defined(RELEASEVERSION)
 		Globals::PlayerPawn = SpawnActorFromClass(XORSTRING("BlueprintGeneratedClass PlayerPawn_Athena.PlayerPawn_Athena_C"), FVector{ 0, 0, 5000 });
 #elif defined(TESTINGVERSION)
 		Globals::PlayerPawn = SpawnActorFromClass(XORSTRING("BlueprintGeneratedClass PlayerPawn_Athena.PlayerPawn_Athena_C"), FVector{ 0, 0, 1000 });
 #endif
 		Possess();
-#ifndef SERVERCODE
 		MiniMap();
 		DestroyLods();
 		SetName();
 		CustomizationLoadout();
 		SetupBuildingPreviews();
 		InitializeClasses();
-		PrepareGItemDefs();
-#endif
+		SetupItemDefinitions();
+
 		DropLoadingScreen();
-#ifndef SERVERCODE
 		EraScript::Init();
-#endif
 	}
 
 	void OnLoadingScreenDropped()
 	{
-		EquipSkin();
-		EquipPickaxe();
-
 		//Init datatables
 		if ((Globals::EngineVersionString.find("4.16") != string::npos) ||
 			(Globals::EngineVersionString.find("4.19") != string::npos)) {
@@ -178,39 +164,25 @@ public:
 
 		thread thread_array(PrepareArray);
 		thread thread_positioning (SetupPositioning);
-
-#ifndef SERVERCODE
 		thread thread_inventory (Inventory);
+
 		HideNetDebugUI();
 		GrantDefaultAbilities();
-#endif
-#if defined(RELEASEVERSION)
 		ApplyBattleBus();
 		CustomizationLoadout();
-#endif
-		Globals::DroppedLS = true;
+		EquipSkin();
+		EquipPickaxe();
 
-#ifndef SERVERCODE
-		//WAIT FOR THREADS TO FINISH TO DROP LS
 		thread_array.join();
-		thread thread_pickups(SpawnPickupsAthena_Terrain);
-
-		thread_pickups.join();
-		thread_positioning.join();
+		thread (SpawnPickupsAthena_Terrain).join();
 		thread_inventory.join();
 
 		EquipWeapon(GetDefinition(GetQuickbarItem(EFortQuickBars::Primary, 0)), GetGuid(GetQuickbarItem(EFortQuickBars::Primary, 0)));
-		FixSpawnForCH1();
-#endif
-#if defined(TESTINGVERSION)
-		UObject::DumpObjects();
-#endif
-
-#if defined(SERVERCODE)
+		StartSkydiving();
 		StartListening();
-#endif
-
 		ToggleGodMode();
+
+		Globals::DroppedLS = true;
 	}
 
 	void EquipQuickbarItem(EFortQuickBars QuickbarIndex, int Slot)
@@ -325,6 +297,11 @@ public:
 
 		*reinterpret_cast<ENetRole*>(__int64(Globals::PlayerPawn) + __int64(OffsetTable::RoleOffset)) = ENetRole::ROLE_Authority;
 		*reinterpret_cast<ENetRole*>(__int64(Vehicle) + __int64(OffsetTable::RoleOffset)) = ENetRole::ROLE_Authority;
+	}
+
+	void HandleInitializeConsole()
+	{
+		InitializeConsole();
 	}
 
 	void InteractWithContainer(PVOID Params)

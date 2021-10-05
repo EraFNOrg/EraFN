@@ -293,8 +293,9 @@ static void TeleportTo(FRotator rotation, FVector location, UObject* Object = Gl
 }
 
 
-void FixSpawnForCH1()
+void StartSkydiving()
 {
+#ifndef SERVERCODE
 	void* Result;
 	string Receive = EngineVersion::GetVersion(&Result);
 
@@ -314,6 +315,7 @@ void FixSpawnForCH1()
 
 		SetToSkydiving(Globals::PlayerPawn, true);
 	}
+#endif
 }
 
 TArray<FName> GetTableRowNames(UObject* TargetTable)
@@ -711,8 +713,10 @@ void EquipSkin()
 
 void HideNetDebugUI()
 {
+#ifndef SERVERCODE
 	auto NetDebugUI = UObject::GetObjectFromName(XORSTRING("NetDebugUI_C Transient.FortEngine_"));
 	if (NetDebugUI) Globals::ProcessEvent(NetDebugUI, UObject::GetObjectFromName(XORSTRING("Function UMG.UserWidget.RemoveFromViewport")), nullptr);
+#endif
 }
 
 void Destroy(UObject* Target)
@@ -839,6 +843,7 @@ void AdjustRotation()
 
 void ApplyBattleBus()
 {
+#ifdef RELEASEVERSION
 	void* Result;
 	auto ToConvert = reinterpret_cast<FString * (__fastcall*)(void*)>(UniversalStructInstance->addr_GetEngineVersion)(&Result);
 	string Converted;
@@ -846,7 +851,7 @@ void ApplyBattleBus()
 
 	if (Converted.find("3807424") != string::npos)
 	{
-		UObject* CurrentBus = UObject::GetObjectFromName("AthenaBattleBusItemDefinition BBID_WinterBus.BBID_WinterBus");
+		UObject* CurrentBus = UObject::GetObjectFromName(XORSTRING("AthenaBattleBusItemDefinition BBID_WinterBus.BBID_WinterBus"));
 		if (CurrentBus)
 		{
 			*reinterpret_cast<UObject**>(reinterpret_cast<uintptr_t>(Globals::PlayerController) + UObject::FindOffset(XORSTRING("StructProperty FortniteGame.FortPlayerControllerAthena.CustomizationLoadout")) + UObject::FindOffset(XORSTRING("ObjectProperty FortniteGame.FortAthenaLoadout.BattleBus"))) = CurrentBus;
@@ -855,21 +860,21 @@ void ApplyBattleBus()
 	}
 	else if (Converted.find("5.") != string::npos)
 	{
-		UObject* CurrentBus = UObject::GetObjectFromName("AthenaBattleBusItemDefinition BBID_BirthdayBus.BBID_BirthdayBus"); 
+		UObject* CurrentBus = UObject::GetObjectFromName(XORSTRING("AthenaBattleBusItemDefinition BBID_BirthdayBus.BBID_BirthdayBus"));
 		if (CurrentBus) {
 			*reinterpret_cast<UObject**>(reinterpret_cast<uintptr_t>(Globals::PlayerController) + UObject::FindOffset(XORSTRING("StructProperty FortniteGame.FortPlayerControllerAthena.CustomizationLoadout")) + UObject::FindOffset(XORSTRING("ObjectProperty FortniteGame.FortAthenaLoadout.BattleBus"))) = CurrentBus;
 		}
 	}
 	else if (Converted.find("6.") != string::npos)
 	{
-		UObject* CurrentBus = UObject::GetObjectFromName("AthenaBattleBusItemDefinition BBID_HalloweenBus.BBID_HalloweenBus");
+		UObject* CurrentBus = UObject::GetObjectFromName(XORSTRING("AthenaBattleBusItemDefinition BBID_HalloweenBus.BBID_HalloweenBus"));
 		if (CurrentBus) {
 			*reinterpret_cast<UObject**>(reinterpret_cast<uintptr_t>(Globals::PlayerController) + UObject::FindOffset(XORSTRING("StructProperty FortniteGame.FortPlayerControllerAthena.CustomizationLoadout")) + UObject::FindOffset(XORSTRING("ObjectProperty FortniteGame.FortAthenaLoadout.BattleBus"))) = CurrentBus;
 		}
 	}
 	else if (Converted.find("7.") != string::npos)
 	{
-		UObject* CurrentBus = UObject::GetObjectFromName("AthenaBattleBusItemDefinition BBID_WinterBus.BBID_WinterBus");
+		UObject* CurrentBus = UObject::GetObjectFromName(XORSTRING("AthenaBattleBusItemDefinition BBID_WinterBus.BBID_WinterBus"));
 		if (CurrentBus)
 		{
 			if (OffsetTable::CustomizationLoadout > 0) {
@@ -881,14 +886,16 @@ void ApplyBattleBus()
 			}
 		}
 	}
-
+#endif
 }
 
 void CustomizationLoadout()
 {
+#ifdef RELEASEVERSION
 	static auto ReplicateLoadout = UObject::GetObjectFromName(XORSTRING("Function FortniteGame.FortPlayerPawnAthena.OnRep_CustomizationLoadout"));
 
 	if (ReplicateLoadout) Globals::ProcessEvent(Globals::PlayerPawn, ReplicateLoadout, nullptr);
+#endif
 }
 
 void SetOwner(UObject* Target)
@@ -1144,6 +1151,7 @@ void GetCurrentFocusedSlot(EFortQuickBars* QuickBarIndex, int* Slot, int* Second
 
 UObject* EquipWeapon(UObject* ItemDef, FGuid ItemGuid)
 {
+#ifndef SERVERCODE
 	static auto EquipWeaponDefinition = UObject::GetObjectFromName(XORSTRING("Function FortniteGame.FortPawn.EquipWeaponDefinition"));
 
 	struct EquipWeapon_Params
@@ -1160,10 +1168,12 @@ UObject* EquipWeapon(UObject* ItemDef, FGuid ItemGuid)
 	Globals::ProcessEvent(Globals::PlayerPawn, EquipWeaponDefinition, &params);
 
 	return params.ReturnValue;
+#endif
 }
 
 void Inventory()
 {
+#ifndef SERVERCODE
 	struct InventoryPointer
 	{
 		UObject* Inventory;
@@ -1192,21 +1202,21 @@ void Inventory()
 	AddToInventory(CreateItem(UObject::GetObjectFromName(XORSTRING("FortBuildingItemDefinition BuildingItemData_Floor.BuildingItemData_Floor")), 0), EFortQuickBars::Secondary, 1);
 	AddToInventory(CreateItem(UObject::GetObjectFromName(XORSTRING("FortBuildingItemDefinition BuildingItemData_Stair_W.BuildingItemData_Stair_W")), 0), EFortQuickBars::Secondary, 2);
 	AddToInventory(CreateItem(UObject::GetObjectFromName(XORSTRING("FortBuildingItemDefinition BuildingItemData_RoofS.BuildingItemData_RoofS")), 0), EFortQuickBars::Secondary, 3);
-	AddToInventory(CreateItem(UObject::GetObjectFromName(XORSTRING("FortResourceItemDefinition WoodItemData.WoodItemData")), 999), EFortQuickBars::Max_None, 0);
-	AddToInventory(CreateItem(UObject::GetObjectFromName(XORSTRING("FortResourceItemDefinition StoneItemData.StoneItemData")), 999), EFortQuickBars::Max_None, 0);
-	AddToInventory(CreateItem(UObject::GetObjectFromName(XORSTRING("FortResourceItemDefinition MetalItemData.MetalItemData")), 999), EFortQuickBars::Max_None, 0);
-	AddToInventory(CreateItem(UObject::GetObjectFromName(XORSTRING("FortAmmoItemDefinition AthenaAmmoDataBulletsHeavy.AthenaAmmoDataBulletsHeavy")), 999), EFortQuickBars::Max_None, 0);
-	AddToInventory(CreateItem(UObject::GetObjectFromName(XORSTRING("FortAmmoItemDefinition AthenaAmmoDataBulletsLight.AthenaAmmoDataBulletsLight")), 999), EFortQuickBars::Max_None, 0);
-	AddToInventory(CreateItem(UObject::GetObjectFromName(XORSTRING("FortAmmoItemDefinition AthenaAmmoDataBulletsMedium.AthenaAmmoDataBulletsMedium")), 999), EFortQuickBars::Max_None, 0);
-	AddToInventory(CreateItem(UObject::GetObjectFromName(XORSTRING("FortAmmoItemDefinition AthenaAmmoDataShells.AthenaAmmoDataShells")), 999), EFortQuickBars::Max_None, 0);
-	AddToInventory(CreateItem(UObject::GetObjectFromName(XORSTRING("FortAmmoItemDefinition AmmoDataRockets.AmmoDataRockets")), 999), EFortQuickBars::Max_None, 0);
+	AddToInventory(CreateItem(UObject::GetObjectFromName(XORSTRING("FortResourceItemDefinition WoodItemData.WoodItemData"), false, false, true, Globals::GItemDefs), 999), EFortQuickBars::Max_None, 0);
+	AddToInventory(CreateItem(UObject::GetObjectFromName(XORSTRING("FortResourceItemDefinition StoneItemData.StoneItemData"), false, false, true, Globals::GItemDefs), 999), EFortQuickBars::Max_None, 0);
+	AddToInventory(CreateItem(UObject::GetObjectFromName(XORSTRING("FortResourceItemDefinition MetalItemData.MetalItemData"), false, false, true, Globals::GItemDefs), 999), EFortQuickBars::Max_None, 0);
+	AddToInventory(CreateItem(UObject::GetObjectFromName(XORSTRING("FortAmmoItemDefinition AthenaAmmoDataBulletsHeavy.AthenaAmmoDataBulletsHeavy"), false, false, true, Globals::GItemDefs), 999), EFortQuickBars::Max_None, 0);
+	AddToInventory(CreateItem(UObject::GetObjectFromName(XORSTRING("FortAmmoItemDefinition AthenaAmmoDataBulletsLight.AthenaAmmoDataBulletsLight"), false, false, true, Globals::GItemDefs), 999), EFortQuickBars::Max_None, 0);
+	AddToInventory(CreateItem(UObject::GetObjectFromName(XORSTRING("FortAmmoItemDefinition AthenaAmmoDataBulletsMedium.AthenaAmmoDataBulletsMedium"), false, false, true, Globals::GItemDefs), 999), EFortQuickBars::Max_None, 0);
+	AddToInventory(CreateItem(UObject::GetObjectFromName(XORSTRING("FortAmmoItemDefinition AthenaAmmoDataShells.AthenaAmmoDataShells"), false, false, true, Globals::GItemDefs), 999), EFortQuickBars::Max_None, 0);
+	AddToInventory(CreateItem(UObject::GetObjectFromName(XORSTRING("FortAmmoItemDefinition AmmoDataRockets.AmmoDataRockets"), false, false, true, Globals::GItemDefs), 999), EFortQuickBars::Max_None, 0);
 
 	UpdateInventory();
 
 	//EDIT TOOL
 	Globals::EditTool = UObject::GetObjectFromName(XORSTRING("FortEditToolItemDefinition EditTool.EditTool"));
 	Globals::EditToolGUID = GetGuid(CreateItem(Globals::EditTool, 0));
-
+#endif
 }
 
 static void BP_ApplyGameplayEffectToSelf(UObject* AbilitySystemComponent, UObject* GameplayEffectClass)
@@ -1293,6 +1303,7 @@ void GrantAbility(UObject* AbilityClass)
 
 void GrantDefaultAbilities()
 {
+#ifndef SERVERCODE
 	Globals::AbilitySystemComponent = *reinterpret_cast<UObject**>(reinterpret_cast<uintptr_t>(Globals::PlayerPawn) + OffsetTable::AbilitySystemComponent);
 	GrantAbility(UObject::GetObjectFromName(XORSTRING("Class FortniteGame.FortGameplayAbility_Sprint")));
 	GrantAbility(UObject::GetObjectFromName(XORSTRING("Class FortniteGame.FortGameplayAbility_Jump")));
@@ -1304,6 +1315,7 @@ void GrantDefaultAbilities()
 		GrantAbility(UObject::GetObjectFromName(XORSTRING("BlueprintGeneratedClass GA_AthenaExitVehicle.GA_AthenaExitVehicle_C")));
 		GrantAbility(UObject::GetObjectFromName(XORSTRING("BlueprintGeneratedClass GA_AthenaInVehicle.GA_AthenaInVehicle_C")));
 	}
+#endif
 }
 
 static bool IsInVehicle()
@@ -1666,8 +1678,9 @@ FString FloatToString(float var)
 	return params.out;
 }
 
-static void PrepareGItemDefs()
+static void SetupItemDefinitions()
 {
+#ifndef SERVERCODE
 	static auto ammo = UObject::GetObjectFromName(XORSTRING("Class FortniteGame.FortAmmoItemDefinition"));
 	static auto weaponranged = UObject::GetObjectFromName(XORSTRING("Class FortniteGame.FortWeaponRangedItemDefinition"));
 	static auto deco = UObject::GetObjectFromName(XORSTRING("Class FortniteGame.FortDecoItemDefinition"));
@@ -1688,10 +1701,12 @@ static void PrepareGItemDefs()
 			Globals::GItemDefs.Add(CurrentObject);
 		}
 	}
+#endif
 }
 
 static void PrepareArray()
 {
+#ifndef SERVERCODE
 	if (!Globals::bPreparedLootArrays) {
 		Globals::bPreparedLootArrays = true;
 		static auto ammo = UObject::GetObjectFromName(XORSTRING("Class FortniteGame.FortAmmoItemDefinition"));
@@ -1834,6 +1849,7 @@ static void PrepareArray()
 
 		printf(XORSTRING("All arrays have been set-up!\n"));
 	}
+#endif
 }
 
 static void InteractWith(PVOID Params)
@@ -2116,9 +2132,10 @@ static void Pickup(PVOID Params)
 	}
 }
 
-#if defined(SERVERCODE)
+
 static void StartListening()
 {
+#if defined(SERVERCODE)
 	Globals::Beacon = SpawnActorFromClass("Class OnlineSubsystemUtils.OnlineBeaconHost", FVector{0,0,100});
 
 	if (Globals::InitHost(Globals::Beacon)) printf(XORSTRING("EraServerLog: started listening!\n"));
@@ -2127,8 +2144,9 @@ static void StartListening()
 	Globals::PauseBeaconRequests(Globals::Beacon, false);
 
 	Globals::bIsListening = true;
-}
 #endif
+}
+
 
 static void CheatScript(void* Params)
 {
@@ -2511,6 +2529,7 @@ static void OnBuildingActorInitialized(UObject* BuildPreview, EFortBuildingType 
 
 static void SetupBuildingPreviews()
 {
+#ifndef SERVERCODE
 	if (Globals::EngineVersionString.find("4.16") != string::npos ||
 		Globals::EngineVersionString.find("4.19") != string::npos)
 	{
@@ -2533,8 +2552,8 @@ static void SetupBuildingPreviews()
 		SetMeshAndMaterial(Globals::RoofPreview, UObject::GetObjectFromName(XORSTRING("StaticMesh PBW_W1_RoofC.PBW_W1_RoofC")));
 		OnBuildingActorInitialized(Globals::RoofPreview, EFortBuildingType::Roof);
 		SetActorHiddenInGame(Globals::RoofPreview, true);
-
 	}
+#endif
 }
 
 
@@ -2647,6 +2666,7 @@ static void SetConsoleKey(FName KeyName)
 
 static void SpawnPickupsAthena_Terrain()
 {
+#ifndef SERVERCODE
 	auto WarmupArray = ArrayFindActorsFromClass(UObject::GetObjectFromName(XORSTRING("BlueprintGeneratedClass Tiered_Athena_FloorLoot_Warmup.Tiered_Athena_FloorLoot_Warmup_C")));
 	auto AthenaArray = ArrayFindActorsFromClass(UObject::GetObjectFromName(XORSTRING("BlueprintGeneratedClass Tiered_Athena_FloorLoot_01.Tiered_Athena_FloorLoot_01_C")));
 
@@ -2742,6 +2762,7 @@ static void SpawnPickupsAthena_Terrain()
 		}
 		}
 	}
+#endif
 }
 
 static void InitializeClasses()
@@ -2759,6 +2780,15 @@ static void ToggleGodMode()
 	static auto fn = UObject::GetObjectFromName(XORSTRING("Function Engine.CheatManager.God"));
 
 	if (fn) Globals::ProcessEvent(Globals::CheatManager, fn, nullptr);
+}
+
+static void InitializeConsole()
+{
+	auto NewConsole = SpawnObject(UObject::GetObjectFromName(XORSTRING("Class Engine.Console")), Globals::Viewport);
+	*reinterpret_cast<UObject**>(__int64(Globals::Viewport) + OffsetTable::ViewportConsole) = NewConsole;
+
+	Globals::CheatManager = SpawnObject(UObject::GetObjectFromName(XORSTRING("Class Engine.CheatManager")), Globals::PlayerController);
+	*reinterpret_cast<UObject**>(__int64(Globals::PlayerController) + UObject::FindOffset(XORSTRING("ObjectProperty Engine.PlayerController.CheatManager"))) = Globals::CheatManager;
 }
 
 #endif // !GAMEFUNCTIONS_H
