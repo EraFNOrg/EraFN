@@ -1436,7 +1436,7 @@ static void Onrep_TossedFromContainer(UObject* Target)
 	Globals::ProcessEvent(Target, fn, nullptr);
 }
 
-static UObject* SpawnPickupAtLocation(UObject* ItemDefinition, int Count, FVector Location, bool bTossedFromContainer = false, uint8_t PickupTypeFlag = 0, uint8_t InPickupSpawnSource = 1, bool bToss = true)
+static UObject* SpawnPickupAtLocation(UObject* ItemDefinition, int Count, FVector Location, bool bTossedFromContainer = false, uint8_t PickupTypeFlag = 0, uint8_t InPickupSpawnSource = 0, bool bToss = true)
 {
 	static UObject* PickupClass = UObject::GetObjectFromName(XORSTRING("Class FortniteGame.FortPickupAthena"));
 
@@ -1446,7 +1446,7 @@ static UObject* SpawnPickupAtLocation(UObject* ItemDefinition, int Count, FVecto
 		*(bool*)(__int64(FortPickupAthena) + OffsetTable::TossedFromContainer) = true;
 		Onrep_TossedFromContainer(FortPickupAthena);
 	}
-	TossPickup(FortPickupAthena, Location, nullptr, 1, bToss);
+	TossPickup(FortPickupAthena, Location, nullptr, 1, bToss, PickupTypeFlag, InPickupSpawnSource);
 
 	*reinterpret_cast<int*>(__int64(FortPickupAthena) + OffsetTable::PrimaryPickupItemEntry + OffsetTable::ItemEntryCount) = Count;
 	*reinterpret_cast<UObject**>(__int64(FortPickupAthena) + OffsetTable::PrimaryPickupItemEntry + OffsetTable::ItemEntryDefinition) = ItemDefinition;
@@ -1898,9 +1898,9 @@ static void InteractWith(PVOID Params)
 				int WeaponRandomIndex = rand() % Globals::WeaponItemDefs.Num();
 				int ResourceRandomIndex = rand() % Globals::ResourceItemDefs.Num();
 				int ConsumableRandomIndex = rand() % Globals::ConsumablesItemDefs.Num();
-				SpawnPickupAtLocation(Globals::WeaponItemDefs[WeaponRandomIndex], Globals::WeaponItemCount[WeaponRandomIndex], ContainerLocation, true, 2, 3);
-				SpawnPickupAtLocation(Globals::ResourceItemDefs[ResourceRandomIndex], Globals::ResourceItemCount[ResourceRandomIndex], ContainerLocation, true, 2, 3);
-				SpawnPickupAtLocation(Globals::ConsumablesItemDefs[ConsumableRandomIndex], Globals::ConsumablesItemCount[ConsumableRandomIndex], ContainerLocation, true, 2, 3);
+				SpawnPickupAtLocation(Globals::WeaponItemDefs[WeaponRandomIndex], Globals::WeaponItemCount[WeaponRandomIndex], ContainerLocation, true, 6, 2);
+				SpawnPickupAtLocation(Globals::ResourceItemDefs[ResourceRandomIndex], Globals::ResourceItemCount[ResourceRandomIndex], ContainerLocation, true, 6, 2);
+				SpawnPickupAtLocation(Globals::ConsumablesItemDefs[ConsumableRandomIndex], Globals::ConsumablesItemCount[ConsumableRandomIndex], ContainerLocation, true, 6, 2);
 
 				auto AmmoData = *(SoftObjectPtr*)(__int64(Globals::WeaponItemDefs[WeaponRandomIndex]) + OffsetTable::AmmoData);
 				auto CurrentAmmoData = OffsetTable::AmmoData > 0 ? SoftObjectPtrToObject(AmmoData) : AssetPtrToObject(*(AssetPtr*)(__int64(Globals::WeaponItemDefs[WeaponRandomIndex]) + OffsetTable::AmmoData416));
@@ -1927,7 +1927,7 @@ static void InteractWith(PVOID Params)
 					{
 						auto RandomIndex = rand() % Globals::AmmoItemDefs.Num();
 						if (Globals::LastItemDefinition != Globals::AmmoItemDefs[RandomIndex]) {
-							SpawnPickupAtLocation(Globals::AmmoItemDefs[RandomIndex], Globals::AmmoItemCount[RandomIndex], ContainerLocation, true, 2, 3);
+							SpawnPickupAtLocation(Globals::AmmoItemDefs[RandomIndex], Globals::AmmoItemCount[RandomIndex], ContainerLocation, true, 6, 2);
 							Globals::LastItemDefinition = Globals::AmmoItemDefs[RandomIndex];
 							break;
 						}

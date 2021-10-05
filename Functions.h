@@ -156,25 +156,27 @@ public:
 
 	void OnLoadingScreenDropped()
 	{
+		EquipSkin();
+		EquipPickaxe();
+
 		//Init datatables
 		if ((Globals::EngineVersionString.find("4.16") != string::npos) ||
 			(Globals::EngineVersionString.find("4.19") != string::npos)) {
 			PrepareArray();
 		}
 
-		thread thread_array(PrepareArray);
-		thread thread_positioning (SetupPositioning);
+		thread thread_array (PrepareArray);
+		SetupPositioning();
 		thread thread_inventory (Inventory);
 
 		HideNetDebugUI();
 		GrantDefaultAbilities();
 		ApplyBattleBus();
 		CustomizationLoadout();
-		EquipSkin();
-		EquipPickaxe();
 
 		thread_array.join();
-		thread (SpawnPickupsAthena_Terrain).join();
+		thread thread_pickup(SpawnPickupsAthena_Terrain);
+		thread_pickup.join();
 		thread_inventory.join();
 
 		EquipWeapon(GetDefinition(GetQuickbarItem(EFortQuickBars::Primary, 0)), GetGuid(GetQuickbarItem(EFortQuickBars::Primary, 0)));
