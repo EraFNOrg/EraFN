@@ -38,6 +38,7 @@ public:
 		OffsetTable::CharacterParts = UObject::FindOffset(XORSTRING("ArrayProperty FortniteGame.FortHero.CharacterParts"));
 		OffsetTable::AdditionalData = UObject::FindOffset(XORSTRING("ObjectProperty FortniteGame.CustomCharacterPart.AdditionalData"));
 		OffsetTable::PlayerState = UObject::FindOffset(XORSTRING("ObjectProperty Engine.Controller.PlayerState"));
+		OffsetTable::PawnPlayerState = UObject::FindOffset(XORSTRING("ObjectProperty Engine.Pawn.PlayerState"));
 		OffsetTable::Inventory = UObject::FindOffset(XORSTRING("ObjectProperty FortniteGame.FortPlayerController.WorldInventory"));
 		OffsetTable::QuickBar = UObject::FindOffset(XORSTRING("ObjectProperty FortniteGame.FortPlayerController.QuickBars"));
 		OffsetTable::ItemInstances = UObject::FindOffset(XORSTRING("ArrayProperty FortniteGame.FortItemList.ItemInstances"));

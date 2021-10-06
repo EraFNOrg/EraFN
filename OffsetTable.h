@@ -66,6 +66,7 @@ namespace OffsetTable {
 	int ItemInstances = 0;
 	int ItemEntry = 0;
 	int PlayerState = 0;
+	int PawnPlayerState = 0;
 	int FortInventory = 0;
 	int PersistentLevel = 0;
 	int WorldSettings = 0;

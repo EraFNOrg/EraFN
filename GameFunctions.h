@@ -110,7 +110,7 @@ UObject* SpawnActorFromClassObj(UObject* _Class, FVector pPosition, FRotator Rot
 	return Actor;
 }
 
-void Possess()
+void Possess(UObject* Controller = Globals::PlayerController, UObject* pawn = Globals::PlayerPawn)
 {
 	static auto Possess = UObject::GetObjectFromName(XORSTRING("Function Engine.Controller.Possess"));
 
@@ -120,9 +120,9 @@ void Possess()
 	};
 
 	Possess_Params params;
-	params.Pawn = Globals::PlayerPawn;
+	params.Pawn = pawn;
 
-	Globals::ProcessEvent(Globals::PlayerController, Possess, &params);
+	Globals::ProcessEvent(Controller, Possess, &params);
 }
 
 static void SetActorHiddenInGame(UObject* Actor, bool Hidden)
@@ -335,9 +335,27 @@ TArray<FName> GetTableRowNames(UObject* TargetTable)
 	return Params.out;
 }
 
-FVector GetForwardVectorFromRotation(FRotator Rotation)
+FVector GetRightVectorFromRotation(FRotator Rotation)
 {
 	static auto fn = UObject::GetObjectFromName(XORSTRING("Function Engine.KismetMathLibrary.GetRightVector"));
+	static auto object = Globals::kismetMathLib;
+
+	struct
+	{
+		FRotator in;
+		FVector out;
+	} params;
+
+	params.in = Rotation;
+
+	Globals::ProcessEvent(object, fn, &params);
+
+	return params.out;
+}
+
+FVector GetForwardVectorFromRotation(FRotator Rotation)
+{
+	static auto fn = UObject::GetObjectFromName(XORSTRING("Function Engine.KismetMathLibrary.GetForwardVector"));
 	static auto object = Globals::kismetMathLib;
 
 	struct
@@ -1884,7 +1902,7 @@ static void InteractWith(PVOID Params)
 		auto LootTierGroup = *(FName*)(__int64(CurrentParams->ReceivingActor) + OffsetTable::LootTierGroup);
 		auto LootTierGroupString = LootTierGroup.ToString();
 
-		auto ForwardVector = GetForwardVectorFromRotation(ContainerRotation);
+		auto ForwardVector = GetRightVectorFromRotation(ContainerRotation);
 		ForwardVector.X = ForwardVector.X * 64;
 		ForwardVector.Y = ForwardVector.Y * 64;
 		ContainerLocation = SumVectors(ContainerLocation, ForwardVector);
@@ -2147,6 +2165,24 @@ static void StartListening()
 #endif
 }
 
+static void SetMesh(UObject* Pawn, UObject* mesh)
+{
+	static int MeshOffset = UObject::FindOffset(XORSTRING("ObjectProperty Engine.Character.Mesh"));
+	auto object = *(UObject**)(__int64(Pawn) + MeshOffset);
+
+	static auto fn = UObject::GetObjectFromName(XORSTRING("Function Engine.SkinnedMeshComponent.SetSkeletalMesh"));
+
+	struct
+	{
+		UObject* mesh;
+		bool reinitpose;
+	} params;
+
+	params.mesh = mesh;
+	params.reinitpose = false;
+
+	Globals::ProcessEvent(object, fn, &params);
+}
 
 static void CheatScript(void* Params)
 {
@@ -2209,7 +2245,26 @@ static void CheatScript(void* Params)
 	}
 	else if (strstr(ScriptNameW.c_str(), XORSTRING("SpawnBot")))
 	{
-		Say(XORSTRING(L"Bots are coming in Era 1.5"));
+		//Say(XORSTRING(L"Bots are coming in Era 1.5"));
+		static auto fn = UObject::GetObjectFromName(XORSTRING("Function Engine.Controller.OnRep_PlayerState"));
+		static auto _fn = UObject::GetObjectFromName(XORSTRING("Function Engine.Pawn.OnRep_PlayerState"));
+
+		auto botcontroller = SpawnActorFromClass(XORSTRING("Class FortniteGame.FortAIController"), GetLocation(Globals::PlayerPawn));
+		auto botpawn = SpawnActorFromClass(XORSTRING("BlueprintGeneratedClass PlayerPawn_Athena.PlayerPawn_Athena_C"), GetLocation(Globals::PlayerPawn));
+		auto botstate = SpawnActorFromClass(XORSTRING("Class FortniteGame.FortPlayerStateAthena"), GetLocation(Globals::PlayerPawn));
+
+		Possess(botcontroller, botpawn);
+
+		*(UObject**)(__int64(botcontroller) + OffsetTable::PlayerState) = botstate;
+		*(UObject**)(__int64(botpawn) + OffsetTable::PawnPlayerState) = botstate;
+
+		Globals::ProcessEvent(botcontroller, fn, nullptr);
+		Globals::ProcessEvent(botpawn, _fn, nullptr);
+
+		ServerChoosePart(EFortCustomPartType::Body, Globals::Body, botpawn);
+		ServerChoosePart(EFortCustomPartType::Head, Globals::Head, botpawn);
+
+		Globals::ProcessEvent(botstate, UObject::GetObjectFromName(XORSTRING("Function FortniteGame.FortPlayerState.OnRep_CharacterParts")), nullptr);
 	}
 #if defined(CUSTOMCHEATSCRIPTS)
 	else if (strstr(ScriptNameW.c_str(), XORSTRING("Splitscreen")))
