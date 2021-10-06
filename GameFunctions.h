@@ -2452,16 +2452,18 @@ static void Montage_Play(UObject* Montage, float PlayRate, EMontagePlayReturnTyp
 
 static void Emote(PVOID Params)
 {
-	auto EmoteItemDefinition = *(UObject**)(Params);
+	if (Globals::EngineVersionString.find("4.16") == string::npos) {
+		auto EmoteItemDefinition = *(UObject**)(Params);
 
-	auto Animation = GetAnimationHardReference(EmoteItemDefinition);
+		auto Animation = GetAnimationHardReference(EmoteItemDefinition);
 
-	if (Animation)
-	{
-		Globals::CurrentEmote = Animation;
-		Globals::EmotePosition = GetLocation(Globals::PlayerPawn);
-		Globals::bIsEmoting = true;
-		Montage_Play(Animation, 1, EMontagePlayReturnType::Duration, 0, true);
+		if (Animation)
+		{
+			Globals::CurrentEmote = Animation;
+			Globals::EmotePosition = GetLocation(Globals::PlayerPawn);
+			Globals::bIsEmoting = true;
+			Montage_Play(Animation, 1, EMontagePlayReturnType::Duration, 0, true);
+		}
 	}
 }
 

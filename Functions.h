@@ -159,30 +159,24 @@ public:
 		EquipSkin();
 		EquipPickaxe();
 
-		//Init datatables
-		if ((Globals::EngineVersionString.find("4.16") != string::npos) ||
-			(Globals::EngineVersionString.find("4.19") != string::npos)) {
-			PrepareArray();
-		}
+		PrepareArray();
 
-		thread thread_array (PrepareArray);
 		SetupPositioning();
 		thread thread_inventory (Inventory);
+		thread thread_pickup(SpawnPickupsAthena_Terrain);
 
 		HideNetDebugUI();
 		GrantDefaultAbilities();
 		ApplyBattleBus();
 		CustomizationLoadout();
+		StartSkydiving();
+		StartListening();
+		ToggleGodMode();
 
-		thread_array.join();
-		thread thread_pickup(SpawnPickupsAthena_Terrain);
 		thread_pickup.join();
 		thread_inventory.join();
 
 		EquipWeapon(GetDefinition(GetQuickbarItem(EFortQuickBars::Primary, 0)), GetGuid(GetQuickbarItem(EFortQuickBars::Primary, 0)));
-		StartSkydiving();
-		StartListening();
-		ToggleGodMode();
 
 		Globals::DroppedLS = true;
 	}
