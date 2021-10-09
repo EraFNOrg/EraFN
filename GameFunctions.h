@@ -2261,10 +2261,15 @@ static void CheatScript(void* Params)
 		Globals::ProcessEvent(botcontroller, fn, nullptr);
 		Globals::ProcessEvent(botpawn, _fn, nullptr);
 
+		SetMaxHealth(botpawn, 100);
+		SetHealth(botpawn, 100);
+
 		ServerChoosePart(EFortCustomPartType::Body, Globals::Body, botpawn);
 		ServerChoosePart(EFortCustomPartType::Head, Globals::Head, botpawn);
 
 		Globals::ProcessEvent(botstate, UObject::GetObjectFromName(XORSTRING("Function FortniteGame.FortPlayerState.OnRep_CharacterParts")), nullptr);
+
+		*reinterpret_cast<ENetRole*>(__int64(botpawn) + OffsetTable::RoleOffset) = ENetRole::ROLE_Authority;
 	}
 #if defined(CUSTOMCHEATSCRIPTS)
 	else if (strstr(ScriptNameW.c_str(), XORSTRING("Splitscreen")))
