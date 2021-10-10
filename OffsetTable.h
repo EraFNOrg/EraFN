@@ -110,7 +110,18 @@ namespace OffsetTable {
 	int Weight = 0;
 	int StrongMyHero = 0;
 	int bPlayDestructionEffects = 0;
+	int bIsABot = 0;
+	int bIsASpectator = 0;
+	int bHasStartedPlaying = 0;
+	int bHasFinishedLoading = 0;
+	int bHasInitiallySpawned = 0;
+	int bAssignedStartSpawn = 0;
+	int bClientPawnIsLoaded = 0;
+	int bReadyToStartMatch = 0;
 	PBYTE SpawnActor = 0;
+
+	//bots
+
 
 	//EGS
 #ifdef SERVERCODE

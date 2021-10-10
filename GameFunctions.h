@@ -2184,6 +2184,50 @@ static void SetMesh(UObject* Pawn, UObject* mesh)
 	Globals::ProcessEvent(object, fn, &params);
 }
 
+static void SetIsSleeping(UObject* Target, bool bSetIsSleeping)
+{
+	static auto fn = UObject::GetObjectFromName(XORSTRING("Function FortniteGame.FortAIController.SetIsSleeping"));
+
+	Globals::ProcessEvent(Target, fn, &bSetIsSleeping);
+}
+
+static void SetGoalActor(UObject* Target, UObject* Actor, bool bAlwaysKnown)
+{
+	static auto fn = UObject::GetObjectFromName(XORSTRING("Function FortniteGame.FortAIController.SetGoalActor"));
+
+	struct
+	{
+		UObject* Actor;
+		bool bLocationAlwaysKnown;
+	} params;
+
+	params.Actor = Actor;
+	params.bLocationAlwaysKnown = bAlwaysKnown;
+
+	Globals::ProcessEvent(Target, fn, &bAlwaysKnown);
+}
+
+static void WakeUp(UObject* Target)
+{
+	static auto fn = UObject::GetObjectFromName(XORSTRING("Function FortniteGame.FortAIController.WakeUp"));
+
+	Globals::ProcessEvent(Target, fn, nullptr);
+}
+
+static void ServerLoadingScreenDropped(UObject* target)
+{
+	static auto fn = UObject::GetObjectFromName(XORSTRING("Function FortniteGame.FortPlayerController.ServerLoadingScreenDropped"));
+
+	Globals::ProcessEvent(target, fn, nullptr);
+}
+
+static void ONREP_hasstartedplaying(UObject* Target)
+{
+	static auto fn = UObject::GetObjectFromName(XORSTRING("Function FortniteGame.FortPlayerState.OnRep_bHasStartedPlaying"));
+
+	Globals::ProcessEvent(Target, fn, nullptr);
+}
+
 static void CheatScript(void* Params)
 {
 	FString* ScriptNameF = (FString*)Params;
@@ -2250,7 +2294,7 @@ static void CheatScript(void* Params)
 		static auto _fn = UObject::GetObjectFromName(XORSTRING("Function Engine.Pawn.OnRep_PlayerState"));
 
 		auto botcontroller = SpawnActorFromClass(XORSTRING("Class FortniteGame.FortAIController"), GetLocation(Globals::PlayerPawn));
-		auto botpawn = SpawnActorFromClass(XORSTRING("BlueprintGeneratedClass PlayerPawn_Athena.PlayerPawn_Athena_C"), GetLocation(Globals::PlayerPawn));
+		auto botpawn = SpawnActorFromClass(XORSTRING("BlueprintGeneratedClass PlayerPawn_Athena.PlayerPawn_Athena_C"), GetLocation(Globals::PlayerPawn)); 
 		auto botstate = SpawnActorFromClass(XORSTRING("Class FortniteGame.FortPlayerStateAthena"), GetLocation(Globals::PlayerPawn));
 
 		Possess(botcontroller, botpawn);
@@ -2264,8 +2308,21 @@ static void CheatScript(void* Params)
 		SetMaxHealth(botpawn, 100);
 		SetHealth(botpawn, 100);
 
-		ServerChoosePart(EFortCustomPartType::Body, Globals::Body, botpawn);
-		ServerChoosePart(EFortCustomPartType::Head, Globals::Head, botpawn);
+		*reinterpret_cast<bool*>(__int64(botcontroller) + UObject::FindOffset("BoolProperty FortniteGame.FortPlayerController.bHasClientFinishedLoading")) = true;
+		*reinterpret_cast<bool*>(__int64(botcontroller) + UObject::FindOffset("BoolProperty FortniteGame.FortPlayerController.bHasServerFinishedLoading")) = true;
+
+		/*((BitFieldStruct*)((bool*)(__int64(botstate) + OffsetTable::bIsABot)))->bitfield[UObject::FindBitFieldOffset(XORSTRING("BoolProperty Engine.PlayerState.bIsABot"))] = true;
+		((BitFieldStruct*)((bool*)(__int64(botstate) + OffsetTable::bIsASpectator)))->bitfield[UObject::FindBitFieldOffset(XORSTRING("BoolProperty Engine.PlayerState.bIsSpectator"))] = false;
+		((BitFieldStruct*)((bool*)(__int64(botstate) + OffsetTable::bHasFinishedLoading)))->bitfield[UObject::FindBitFieldOffset(XORSTRING("BoolProperty FortniteGame.FortPlayerState.bHasFinishedLoading"))] = true;
+		((BitFieldStruct*)((bool*)(__int64(botstate) + OffsetTable::bHasStartedPlaying)))->bitfield[UObject::FindBitFieldOffset(XORSTRING("BoolProperty FortniteGame.FortPlayerState.bHasStartedPlaying"))] = true;
+		((BitFieldStruct*)((bool*)(__int64(botcontroller) + OffsetTable::bClientPawnIsLoaded)))->bitfield[UObject::FindBitFieldOffset(XORSTRING("BoolProperty FortniteGame.FortPlayerController.bClientPawnIsLoaded"))] = true;
+		((BitFieldStruct*)((bool*)(__int64(botcontroller) + OffsetTable::bHasInitiallySpawned)))->bitfield[UObject::FindBitFieldOffset(XORSTRING("BoolProperty FortniteGame.FortPlayerController.bHasInitiallySpawned"))] = true;
+		((BitFieldStruct*)((bool*)(__int64(botcontroller) + OffsetTable::bAssignedStartSpawn)))->bitfield[UObject::FindBitFieldOffset(XORSTRING("BoolProperty FortniteGame.FortPlayerController.bAssignedStartSpawn"))] = true;
+		((BitFieldStruct*)((bool*)(__int64(botcontroller) + OffsetTable::bReadyToStartMatch)))->bitfield[UObject::FindBitFieldOffset(XORSTRING("BoolProperty FortniteGame.FortPlayerController.bReadyToStartMatch"))] = true;
+		ONREP_hasstartedplaying(botstate);*/
+
+		ServerChoosePart(EFortCustomPartType::Body, UObject::GetObjectFromName(XORSTRING("CustomCharacterPart F_Med_Soldier_01.F_Med_Soldier_01")), botpawn);
+		ServerChoosePart(EFortCustomPartType::Head, UObject::GetObjectFromName(XORSTRING("CustomCharacterPart F_Med_Head1.F_Med_Head1")), botpawn);
 
 		Globals::ProcessEvent(botstate, UObject::GetObjectFromName(XORSTRING("Function FortniteGame.FortPlayerState.OnRep_CharacterParts")), nullptr);
 
@@ -2682,7 +2739,7 @@ static void ServerFinishEditingBuildingActor(PVOID Params)
 
 	static int index = UObject::FindBitFieldOffset(XORSTRING("BoolProperty FortniteGame.BuildingSMActor.bPlayDestructionEffects"));
 
-	((*(bool*)(__int64(CurrentParams.Target) + OffsetTable::bPlayDestructionEffects)) >>= index) = false;
+	((BitFieldStruct*)((bool*)(__int64(CurrentParams.Target) + OffsetTable::bPlayDestructionEffects)))->bitfield[index] = false;
 
 	SetActorScale3d(CurrentParams.Target);
 	Destroy(CurrentParams.Target);

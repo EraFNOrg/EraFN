@@ -18,6 +18,7 @@ GNU General Public License for more details.*/
 #include <locale>
 #include <set>
 #include <fstream>
+#include <bitset>
 
 int GetObjectNameOffset = 0;
 int EngineOffset = 0;
@@ -1097,6 +1098,11 @@ struct FKey
 {
 	FName keyname;
 	char pad[0x10];
+};
+
+struct BitFieldStruct
+{
+	bitset<8> bitfield;
 };
 
 #endif // !UE4_H

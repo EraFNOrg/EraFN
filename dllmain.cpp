@@ -15,6 +15,7 @@ GNU General Public License for more details.*/
 #include "OffsetInitialize.h"
 #include "UnrealEngineStructs.h"
 #include "CURLhook.h"
+#include <ctime>
 
 DWORD _stdcall FortniteMain(LPVOID)
 {

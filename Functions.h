@@ -86,6 +86,14 @@ public:
 		OffsetTable::CountLoot = UObject::FindOffset(XORSTRING("IntProperty FortniteGame.FortLootPackageData.Count"));
 		OffsetTable::Weight = UObject::FindOffset(XORSTRING("FloatProperty FortniteGame.FortLootPackageData.Weight"));
 		OffsetTable::bPlayDestructionEffects = UObject::FindOffset(XORSTRING("BoolProperty FortniteGame.BuildingSMActor.bPlayDestructionEffects"));
+		OffsetTable::bIsABot = UObject::FindOffset(XORSTRING("BoolProperty Engine.PlayerState.bIsABot"));
+		OffsetTable::bIsASpectator = UObject::FindOffset(XORSTRING("BoolProperty Engine.PlayerState.bIsSpectator"));
+		OffsetTable::bHasFinishedLoading = UObject::FindOffset(XORSTRING("BoolProperty FortniteGame.FortPlayerState.bHasFinishedLoading"));
+		OffsetTable::bHasStartedPlaying = UObject::FindOffset(XORSTRING("BoolProperty FortniteGame.FortPlayerState.bHasStartedPlaying"));
+		OffsetTable::bClientPawnIsLoaded = UObject::FindOffset(XORSTRING("BoolProperty FortniteGame.FortPlayerController.bClientPawnIsLoaded"));
+		OffsetTable::bHasInitiallySpawned = UObject::FindOffset(XORSTRING("BoolProperty FortniteGame.FortPlayerController.bHasInitiallySpawned"));
+		OffsetTable::bAssignedStartSpawn = UObject::FindOffset(XORSTRING("BoolProperty FortniteGame.FortPlayerController.bAssignedStartSpawn"));
+		OffsetTable::bReadyToStartMatch = UObject::FindOffset(XORSTRING("BoolProperty FortniteGame.FortPlayerController.bReadyToStartMatch"));
 #ifdef SERVERCODE
 		OffsetTable::ClientConnectionsOffset = UObject::FindOffset(XORSTRING("ArrayProperty Engine.NetDriver.ClientConnections"));
 		OffsetTable::NetDriverWorld = UObject::FindOffset(XORSTRING("ObjectProperty Engine.NetDriver.World"));
