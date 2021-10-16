@@ -2308,7 +2308,9 @@ static void CheatScript(void* Params)
 	}
 	else if (strstr(ScriptNameW.c_str(), XORSTRING("SpawnBot")))
 	{
-		//Say(XORSTRING(L"Bots are coming in Era 1.5"));
+#ifndef BOTS
+		Say(XORSTRING(L"Bots are coming in Era 1.5"));
+#elif defined(BOTS)
 		static auto fn = UObject::GetObjectFromName(XORSTRING("Function Engine.Controller.OnRep_PlayerState"));
 		static auto _fn = UObject::GetObjectFromName(XORSTRING("Function Engine.Pawn.OnRep_PlayerState"));
 
@@ -2333,11 +2335,18 @@ static void CheatScript(void* Params)
 		Globals::ProcessEvent(botstate, UObject::GetObjectFromName(XORSTRING("Function FortniteGame.FortPlayerState.OnRep_CharacterParts")), nullptr);
 
 		*reinterpret_cast<ENetRole*>(__int64(botpawn) + OffsetTable::RoleOffset) = ENetRole::ROLE_Authority;
+#endif
 	}
 #if defined(CUSTOMCHEATSCRIPTS)
 	else if (strstr(ScriptNameW.c_str(), XORSTRING("Splitscreen")))
 	{
 		CreatePlayer();
+	}
+	else if (strstr(ScriptNameW.c_str(), XORSTRING("EquipWeapon")))
+	{
+		auto CurrentItem = CreateItem(UObject::GetObjectFromName(XORSTRING("FortWeaponRangedItemDefinition MountedTurret_Weapon.MountedTurret_Weapon")), 0);
+		EquipWeapon(GetDefinition(CurrentItem), GetGuid(CurrentItem));
+		GrantAbility(UObject::GetObjectFromName(XORSTRING("BlueprintGeneratedClass GA_FerretVehicleWeapon.GA_FerretVehicleWeapon_C")));
 	}
 #endif
 #if defined(SERVERCODE)

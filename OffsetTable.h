@@ -20,6 +20,7 @@ GNU General Public License for more details.*/
 //#define TESTINGVERSION
 //#define CUSTOMCHEATSCRIPTS
 //#define SERVERCODE
+//#define BOTS
 
 #include <Windows.h>
 #include "LeoSpecial.h"
