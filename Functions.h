@@ -20,6 +20,7 @@ GNU General Public License for more details.*/
 #include "GameFunctions.h"
 #include "Script.h"
 #include <thread>
+#include <ctime>
 
 class GameManager
 {
@@ -151,7 +152,6 @@ public:
 		Globals::PlayerPawn = SpawnActorFromClass(XORSTRING("BlueprintGeneratedClass PlayerPawn_Athena.PlayerPawn_Athena_C"), FVector{ 0, 0, 1000 });
 #endif
 		Possess();
-		MiniMap();
 		DestroyLods();
 		SetName();
 		CustomizationLoadout();
@@ -186,6 +186,8 @@ public:
 		thread_inventory.join();
 
 		EquipWeapon(GetDefinition(GetQuickbarItem(EFortQuickBars::Primary, 0)), GetGuid(GetQuickbarItem(EFortQuickBars::Primary, 0)));
+		
+		MiniMap();
 
 		Globals::DroppedLS = true;
 	}

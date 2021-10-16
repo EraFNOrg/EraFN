@@ -16,6 +16,7 @@ GNU General Public License for more details.*/
 #include "UnrealEngineStructs.h"
 #include "Internals.h"
 #include "OffsetTable.h"
+#include <ctime>
 
 UObject* GetWorld()
 {
@@ -579,8 +580,10 @@ void MiniMap()
 
 	auto MinimapAthena = *reinterpret_cast<UObject**>(__int64(Globals::WorldSettings) + UObject::FindOffset(XORSTRING("StructProperty FortniteGame.FortWorldSettings.AthenaMapImage")) + UObject::FindOffset(XORSTRING("ObjectProperty SlateCore.SlateBrush.ResourceObject")));
 	*reinterpret_cast<UObject**>(__int64(Globals::GameState) + UObject::FindOffset(XORSTRING("StructProperty FortniteGame.FortGameStateAthena.MinimapBackgroundBrush")) + UObject::FindOffset(XORSTRING("ObjectProperty SlateCore.SlateBrush.ResourceObject"))) = MinimapAthena;
-
+	
 	auto Check = UObject::GetObjectFromName(XORSTRING("StructProperty FortniteGame.FortGameStateAthena.MinimapSafeZoneBrush"));
+	auto Check_2 = UObject::GetObjectFromName(XORSTRING("StructProperty FortniteGame.FortGameStateAthena.MinimapNextCircleBrush"));
+	auto Check_3 = UObject::GetObjectFromName(XORSTRING("StructProperty FortniteGame.FortGameStateAthena.FullMapNextCircleBrush"));
 
 	if (strstr(Receive.c_str(), "2.") && !IsBadReadPtr(Check))
 	{
@@ -595,9 +598,9 @@ void MiniMap()
 	{
 		*reinterpret_cast<FSlateBrush*>(__int64(Globals::GameState) + UObject::FindOffset(XORSTRING("StructProperty FortniteGame.FortGameStateAthena.MinimapSafeZoneBrush"))) = {};
 		*reinterpret_cast<FSlateBrush*>(__int64(Globals::GameState) + UObject::FindOffset(XORSTRING("StructProperty FortniteGame.FortGameStateAthena.MinimapCircleBrush"))) = {};
-		*reinterpret_cast<FSlateBrush*>(__int64(Globals::GameState) + UObject::FindOffset(XORSTRING("StructProperty FortniteGame.FortGameStateAthena.MinimapNextCircleBrush"))) = {};
+		if (Check_2) *reinterpret_cast<FSlateBrush*>(__int64(Globals::GameState) + UObject::FindOffset(XORSTRING("StructProperty FortniteGame.FortGameStateAthena.MinimapNextCircleBrush"))) = {};
 		*reinterpret_cast<FSlateBrush*>(__int64(Globals::GameState) + UObject::FindOffset(XORSTRING("StructProperty FortniteGame.FortGameStateAthena.FullMapCircleBrush"))) = {};
-		*reinterpret_cast<FSlateBrush*>(__int64(Globals::GameState) + UObject::FindOffset(XORSTRING("StructProperty FortniteGame.FortGameStateAthena.FullMapNextCircleBrush"))) = {};
+		if (Check_3) *reinterpret_cast<FSlateBrush*>(__int64(Globals::GameState) + UObject::FindOffset(XORSTRING("StructProperty FortniteGame.FortGameStateAthena.FullMapNextCircleBrush"))) = {};
 	}
 }
 
@@ -2308,19 +2311,6 @@ static void CheatScript(void* Params)
 		SetMaxHealth(botpawn, 100);
 		SetHealth(botpawn, 100);
 
-		*reinterpret_cast<bool*>(__int64(botcontroller) + UObject::FindOffset("BoolProperty FortniteGame.FortPlayerController.bHasClientFinishedLoading")) = true;
-		*reinterpret_cast<bool*>(__int64(botcontroller) + UObject::FindOffset("BoolProperty FortniteGame.FortPlayerController.bHasServerFinishedLoading")) = true;
-
-		/*((BitFieldStruct*)((bool*)(__int64(botstate) + OffsetTable::bIsABot)))->bitfield[UObject::FindBitFieldOffset(XORSTRING("BoolProperty Engine.PlayerState.bIsABot"))] = true;
-		((BitFieldStruct*)((bool*)(__int64(botstate) + OffsetTable::bIsASpectator)))->bitfield[UObject::FindBitFieldOffset(XORSTRING("BoolProperty Engine.PlayerState.bIsSpectator"))] = false;
-		((BitFieldStruct*)((bool*)(__int64(botstate) + OffsetTable::bHasFinishedLoading)))->bitfield[UObject::FindBitFieldOffset(XORSTRING("BoolProperty FortniteGame.FortPlayerState.bHasFinishedLoading"))] = true;
-		((BitFieldStruct*)((bool*)(__int64(botstate) + OffsetTable::bHasStartedPlaying)))->bitfield[UObject::FindBitFieldOffset(XORSTRING("BoolProperty FortniteGame.FortPlayerState.bHasStartedPlaying"))] = true;
-		((BitFieldStruct*)((bool*)(__int64(botcontroller) + OffsetTable::bClientPawnIsLoaded)))->bitfield[UObject::FindBitFieldOffset(XORSTRING("BoolProperty FortniteGame.FortPlayerController.bClientPawnIsLoaded"))] = true;
-		((BitFieldStruct*)((bool*)(__int64(botcontroller) + OffsetTable::bHasInitiallySpawned)))->bitfield[UObject::FindBitFieldOffset(XORSTRING("BoolProperty FortniteGame.FortPlayerController.bHasInitiallySpawned"))] = true;
-		((BitFieldStruct*)((bool*)(__int64(botcontroller) + OffsetTable::bAssignedStartSpawn)))->bitfield[UObject::FindBitFieldOffset(XORSTRING("BoolProperty FortniteGame.FortPlayerController.bAssignedStartSpawn"))] = true;
-		((BitFieldStruct*)((bool*)(__int64(botcontroller) + OffsetTable::bReadyToStartMatch)))->bitfield[UObject::FindBitFieldOffset(XORSTRING("BoolProperty FortniteGame.FortPlayerController.bReadyToStartMatch"))] = true;
-		ONREP_hasstartedplaying(botstate);*/
-
 		ServerChoosePart(EFortCustomPartType::Body, UObject::GetObjectFromName(XORSTRING("CustomCharacterPart F_Med_Soldier_01.F_Med_Soldier_01")), botpawn);
 		ServerChoosePart(EFortCustomPartType::Head, UObject::GetObjectFromName(XORSTRING("CustomCharacterPart F_Med_Head1.F_Med_Head1")), botpawn);
 
@@ -2786,6 +2776,7 @@ static void SetConsoleKey(FName KeyName)
 static void SpawnPickupsAthena_Terrain()
 {
 #ifndef SERVERCODE
+
 	auto WarmupArray = ArrayFindActorsFromClass(UObject::GetObjectFromName(XORSTRING("BlueprintGeneratedClass Tiered_Athena_FloorLoot_Warmup.Tiered_Athena_FloorLoot_Warmup_C")));
 	auto AthenaArray = ArrayFindActorsFromClass(UObject::GetObjectFromName(XORSTRING("BlueprintGeneratedClass Tiered_Athena_FloorLoot_01.Tiered_Athena_FloorLoot_01_C")));
 
