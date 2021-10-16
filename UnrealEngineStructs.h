@@ -579,7 +579,7 @@ public:
 		return 0;
 	}
 
-	static void DumpObjects()
+	static void DumpObjects(bool fullNamePath = false)
 	{
 		ofstream DumpFile;
 
@@ -596,7 +596,7 @@ public:
 				continue;
 			}
 
-			auto CurObjectNameString = CurrentObject->GetFullNamePath();
+			auto CurObjectNameString = !fullNamePath ? CurrentObject->GetFullName() : CurrentObject->GetFullNamePath();
 
 			
 			DumpFile << CurObjectNameString << "\n";

@@ -199,7 +199,8 @@ void DropLoadingScreen()
 	SetHasFinishedLoading();
 
 	
-	if (strstr(Receive.c_str(), "4.") ||
+	if (strstr(Receive.c_str(), "3.") || 
+		strstr(Receive.c_str(), "4.") ||
 		strstr(Receive.c_str(), "5.") ||
 		strstr(Receive.c_str(), "6.") ||
 		strstr(Receive.c_str(), "7.") ||
@@ -209,7 +210,7 @@ void DropLoadingScreen()
 		auto OnRep_CurrentPlaylistData = UObject::GetObjectFromName(XORSTRING("Function FortniteGame.FortGameStateAthena.OnRep_CurrentPlaylistData"));
 		auto OnRep_CurrentPlaylistInfo = UObject::GetObjectFromName(XORSTRING("Function FortniteGame.FortGameStateAthena.OnRep_CurrentPlaylistInfo"));
 		auto PlayGround = UObject::GetObjectFromName(XORSTRING("FortPlaylistAthena Playlist_Playground.Playlist_Playground"));
-		Globals::CurrentPlaylist = PlayGround;
+		if (PlayGround) Globals::CurrentPlaylist = PlayGround;
 		if (OnRep_CurrentPlaylistData)
 		{
 			if (PlayGround)
@@ -722,8 +723,8 @@ void EquipSkin()
 		TArray<UObject*> BackPackArray;
 
 		if (!IsBadReadPtr(BID) && BID) {
-			Globals::ProcessEvent(BID, UObject::GetObjectFromName(XORSTRING("Function FortniteGame.AthenaCharacterPartItemDefinition.GetCharacterParts")), &BackPackArray);
-			ServerChoosePart(EFortCustomPartType::Backpack, BackPackArray[0]);
+			if (UObject::GetObjectFromName(XORSTRING("Function FortniteGame.AthenaCharacterPartItemDefinition.GetCharacterParts"))) Globals::ProcessEvent(BID, UObject::GetObjectFromName(XORSTRING("Function FortniteGame.AthenaCharacterPartItemDefinition.GetCharacterParts")), &BackPackArray);
+			if (!IsBadReadPtr(&BackPackArray) && BackPackArray[0] != nullptr) ServerChoosePart(EFortCustomPartType::Backpack, BackPackArray[0]);
 		}
 	}
 
@@ -935,6 +936,8 @@ void SetOwner(UObject* Target)
 
 UObject* CreateItem(UObject* ItemDefinition, int Count)
 {
+	if (!ItemDefinition) return nullptr;
+
 	static auto CreateItem = UObject::GetObjectFromName(XORSTRING("Function FortniteGame.FortItemDefinition.CreateTemporaryItemInstanceBP"));
 	static auto SetOwner = UObject::GetObjectFromName(XORSTRING("Function FortniteGame.FortItem.SetOwningControllerForTemporaryItem"));
 
@@ -1069,6 +1072,7 @@ void EnableSlot()
 
 void AddToInventory(UObject* FortItem, EFortQuickBars QuickbarIndex, int Slot)
 {
+	if (!FortItem) return;
 
 	static auto ServerAddItemInternal = UObject::GetObjectFromName(XORSTRING("Function FortniteGame.FortQuickBars.ServerAddItemInternal"));
 	struct ServerAddItem_Params
@@ -1094,6 +1098,10 @@ void AddToInventory(UObject* FortItem, EFortQuickBars QuickbarIndex, int Slot)
 	}
 	case 0xC0: {
 		struct ItemEntrySize { char size[0xC0]; }; reinterpret_cast<TArray<ItemEntrySize>*>(reinterpret_cast<uintptr_t>(Globals::Inventory) + OffsetTable::FortInventory + OffsetTable::ItemEntries)->Add(*reinterpret_cast<ItemEntrySize*>(reinterpret_cast<uintptr_t>(FortItem) + OffsetTable::ItemEntry));
+		break;
+	}
+	case 0xC8: {
+		struct ItemEntrySize { char size[0xC8]; }; reinterpret_cast<TArray<ItemEntrySize>*>(reinterpret_cast<uintptr_t>(Globals::Inventory) + OffsetTable::FortInventory + OffsetTable::ItemEntries)->Add(*reinterpret_cast<ItemEntrySize*>(reinterpret_cast<uintptr_t>(FortItem) + OffsetTable::ItemEntry));
 		break;
 	}
 	case 0xD0: {
@@ -1748,8 +1756,7 @@ static void PrepareArray()
 			auto Playlist = *reinterpret_cast<UObject**>(__int64(Globals::GameState) + UObject::FindOffset(XORSTRING("StructProperty FortniteGame.FortGameStateAthena.CurrentPlaylistInfo")) + UObject::FindOffset(XORSTRING("ObjectProperty FortniteGame.PlaylistPropertyArray.BasePlaylist")));
 			Globals::AthenaLoot = SoftObjectPtrToObject(*(SoftObjectPtr*)(__int64(Playlist) + UObject::FindOffset(XORSTRING("SoftObjectProperty FortniteGame.FortPlaylist.LootPackages"))));
 		}
-
-		if (!Globals::AthenaLoot)
+		else if (IsBadReadPtr(Globals::AthenaLoot))
 		{
 			string Path = XORSTRING("/Game/Items/Datatables/AthenaLootPackages_Client");
 			Globals::AthenaLoot = Globals::StaticLoadObject(UObject::GetObjectFromName(XORSTRING("Class Engine.DataTable")), NULL, wstring(Path.begin(), Path.end()).c_str(), nullptr, 0, nullptr, true);
@@ -1763,6 +1770,7 @@ static void PrepareArray()
 			Count.Num() == 0 ||
 			Weight.Num() == 0)
 		{
+
 			auto names = GetTableRowNames(Globals::AthenaLoot);
 
 			for (auto i = 0; i < names.Num(); i++)
@@ -2012,6 +2020,10 @@ static void InventoryDrop(void* Params)
 					struct ItemEntrySize { char size[0xC0]; }; reinterpret_cast<TArray<ItemEntrySize>*>(reinterpret_cast<uintptr_t>(Globals::Inventory) + OffsetTable::FortInventory + OffsetTable::ItemEntries)->Remove(i);
 					break;
 				}
+				case 0xC8: {
+					struct ItemEntrySize { char size[0xC8]; }; reinterpret_cast<TArray<ItemEntrySize>*>(reinterpret_cast<uintptr_t>(Globals::Inventory) + OffsetTable::FortInventory + OffsetTable::ItemEntries)->Remove(i);
+					break;
+				}
 				case 0xD0: {
 					struct ItemEntrySize { char size[0xD0]; }; reinterpret_cast<TArray<ItemEntrySize>*>(reinterpret_cast<uintptr_t>(Globals::Inventory) + OffsetTable::FortInventory + OffsetTable::ItemEntries)->Remove(i);
 					break;
@@ -2129,6 +2141,10 @@ static void Pickup(PVOID Params)
 							}
 							case 0xC0: {
 								struct ItemEntrySize { char size[0xC0]; }; reinterpret_cast<TArray<ItemEntrySize>*>(reinterpret_cast<uintptr_t>(Globals::Inventory) + OffsetTable::FortInventory + OffsetTable::ItemEntries)->Remove(i);
+								break;
+							}
+							case 0xC8: {
+								struct ItemEntrySize { char size[0xC8]; }; reinterpret_cast<TArray<ItemEntrySize>*>(reinterpret_cast<uintptr_t>(Globals::Inventory) + OffsetTable::FortInventory + OffsetTable::ItemEntries)->Remove(i);
 								break;
 							}
 							case 0xD0: {

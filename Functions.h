@@ -246,7 +246,7 @@ public:
 			}
 		}
 
-		if (IsInBuildMode() && !strstr(Globals::CurrentFortniteVersion.c_str(), "3.") &&
+		if (IsInBuildMode() && (!strstr(Globals::CurrentFortniteVersion.c_str(), "3.") || strstr(Globals::CurrentFortniteVersion.c_str(), "3.5")) &&
 			(Globals::EngineVersionString.find("4.16") == string::npos &&
 				Globals::EngineVersionString.find("4.19") == string::npos) &&
 			!bIsInEditMode())
