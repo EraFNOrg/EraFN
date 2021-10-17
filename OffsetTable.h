@@ -17,6 +17,7 @@ GNU General Public License for more details.*/
 #define RELEASEVERSION
 
 //TO STRIP OUT FROM PUBLIC RELEASES
+//#define NAMESCHECK
 //#define TESTINGVERSION
 //#define CUSTOMCHEATSCRIPTS
 //#define SERVERCODE

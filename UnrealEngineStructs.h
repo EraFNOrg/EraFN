@@ -696,6 +696,15 @@ struct FVector
 	float X;
 	float Y;
 	float Z;
+public: 
+	inline FVector() {}
+
+	FVector(float _X, float _Y, float _Z)
+	{
+		X = _X;
+		Y = _Y;
+		Z = _Z;
+	}
 };
 
 struct FRotator

@@ -153,41 +153,34 @@ public:
 #endif
 		Possess();
 		DestroyLods();
-		SetName();
+		FortSetName();
 		CustomizationLoadout();
 		SetupBuildingPreviews();
 		InitializeClasses();
 		SetupItemDefinitions();
-
+		MiniMap();
 		DropLoadingScreen();
 		EraScript::Init();
 	}
 
 	void OnLoadingScreenDropped()
 	{
+		thread thread_inventory(Inventory);
+		thread thread_abilities(GrantDefaultAbilities);
+
 		EquipSkin();
-		EquipPickaxe();
-
 		PrepareArray();
-
 		SetupPositioning();
-		thread thread_inventory (Inventory);
-		thread thread_pickup(SpawnPickupsAthena_Terrain);
-
+		SpawnPickupsAthena_Terrain();
 		HideNetDebugUI();
-		GrantDefaultAbilities();
 		ApplyBattleBus();
 		CustomizationLoadout();
 		StartSkydiving();
 		StartListening();
 		ToggleGodMode();
 
-		thread_pickup.join();
 		thread_inventory.join();
-
-		EquipWeapon(GetDefinition(GetQuickbarItem(EFortQuickBars::Primary, 0)), GetGuid(GetQuickbarItem(EFortQuickBars::Primary, 0)));
-		
-		MiniMap();
+		thread_abilities.join();
 
 		Globals::DroppedLS = true;
 	}

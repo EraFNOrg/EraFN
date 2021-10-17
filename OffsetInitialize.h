@@ -34,7 +34,7 @@ namespace EraInit
 		printf(XORSTRING("(at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\n"));
 		printf(XORSTRING("MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\n\n"));
 	
-		printf(XORSTRING("Era 1.5.0.2 || Made by danii#4000\nBackend by Kyiro#7884\nLauncher by ozne#3303 and Not a Robot#6932\nSpecial Thanks to Sizzy, Kemo, Mix, Fischsalat!\n\nEnjoy!\n\n\n"));
+		printf(XORSTRING("Era 1.5.1 || Made by danii#4000\nBackend by Kyiro#7884\nLauncher by ozne#3303 and Not a Robot#6932\nSpecial Thanks to Sizzy, Kemo, Mix, Fischsalat!\n\nEnjoy!\n\n\n"));
 
 #if defined (SERVERCODE)
 		printf(XORSTRING("IMPORTANT: THIS ERA VERSION WAS BUILT WITH SERVER CODE!\n\n"));

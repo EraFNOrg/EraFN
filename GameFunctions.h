@@ -16,13 +16,32 @@ GNU General Public License for more details.*/
 #include "UnrealEngineStructs.h"
 #include "Internals.h"
 #include "OffsetTable.h"
-#include <ctime>
+
 
 UObject* GetWorld()
 {
 	static auto Engine = UObject::GetObjectFromName(XORSTRING("FortEngine Transient.FortEngine_"));
 	Globals::Viewport = *reinterpret_cast<UObject**>(reinterpret_cast<uintptr_t>(Engine) + OffsetTable::ViewPort);
 	return Globals::World = *reinterpret_cast<UObject**>(reinterpret_cast<uintptr_t>(Globals::Viewport) + OffsetTable::World);
+}
+
+int RandomIntegerInRange(int Min, int Max)
+{
+	static auto fn = UObject::GetObjectFromName(XORSTRING("Function Engine.KismetMathLibrary.RandomIntegerInRange"), true);
+	static auto object = UObject::GetObjectFromName(XORSTRING("KismetMathLibrary Engine.Default__KismetMathLibrary"));
+	struct
+	{
+		int min;
+		int max;
+		int out;
+	} params;
+
+	params.min = Min;
+	params.max = Max - 1;
+
+	Globals::ProcessEvent(object, fn, &params);
+
+	return params.out;
 }
 
 static UObject* SpawnObject(UObject* Class, UObject* Outer)
@@ -413,6 +432,25 @@ FVector MultiplyVector(FVector A, int B)
 	return params.out;
 }
 
+FString TextToString(FText Text)
+{
+	static auto fn = UObject::GetObjectFromName(XORSTRING("Function Engine.KismetTextLibrary.Conv_TextToString"));
+	static auto object = UObject::GetObjectFromName(XORSTRING("KismetTextLibrary Engine.Default__KismetTextLibrary"));
+
+	struct
+	{
+		FText in;
+		FString out;
+	} params;
+
+	params.in = Text;
+
+	Globals::ProcessEvent(object, fn, &params);
+
+	if (fn) return params.out;
+	else return FString(L"None");
+}
+
 FName StringToName(FString text)
 {
 	static auto fn = UObject::GetObjectFromName(XORSTRING("Function Engine.KismetStringLibrary.Conv_StringToName"));
@@ -453,10 +491,10 @@ FName StringToName(FString text)
 	return Params.Out;
 }
 
-FText StringToText(FString text)
+FText StringToText(const wchar_t* text)
 {
-	static auto fn = UObject::GetObjectFromName(XORSTRING("Function Engine.KismetTextLibrary.Conv_StringToText"));
-	static auto object = UObject::GetObjectFromName(XORSTRING("KismetTextLibrary Engine.Default__KismetTextLibrary"));
+	static auto fn = UObject::GetObjectFromName(XORSTRING("Function Engine.KismetTextLibrary.Conv_StringToText"), true);
+	static auto object = UObject::GetObjectFromName(XORSTRING("KismetTextLibrary Engine.Default__KismetTextLibrary"), true);
 
 	struct
 	{
@@ -467,6 +505,8 @@ FText StringToText(FString text)
 	Params.in = text;
 
 	Globals::ProcessEvent(object, fn, &Params);
+
+	printf("In: %s\n", Params.in.ToString().c_str());
 
 	return Params.Out;
 }
@@ -605,7 +645,22 @@ void MiniMap()
 	}
 }
 
-void SetName()
+static void EquipPickaxe()
+{
+	auto PID = OffsetTable::CustomizationLoadout > 0 ? *(UObject**)(__int64(Globals::PlayerController) + OffsetTable::CustomizationLoadout + UObject::FindOffset(XORSTRING("ObjectProperty FortniteGame.FortAthenaLoadout.Pickaxe"))) :
+		*(UObject**)(__int64(Globals::PlayerController) + UObject::FindOffset(XORSTRING("StructProperty FortniteGame.FortPlayerController.CosmeticLoadoutPC")) + UObject::FindOffset(XORSTRING("ObjectProperty FortniteGame.FortAthenaLoadout.Pickaxe")));
+
+	if (!IsBadReadPtr(PID) && PID) {
+		Globals::PickaxeItemDefinition = *(UObject**)(__int64(PID) + UObject::FindOffset(XORSTRING("ObjectProperty FortniteGame.AthenaPickaxeItemDefinition.WeaponDefinition")));
+	}
+	else if (!PID)
+	{
+		Globals::PickaxeItemDefinition = UObject::GetObjectFromName(XORSTRING("FortWeaponMeleeItemDefinition WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01"));
+	}
+}
+
+
+void FortSetName(const wchar_t* DefaultName = TEXT("PROJECT ERA"))
 {
 	static auto SetName = UObject::GetObjectFromName(XORSTRING("Function Engine.GameModeBase.ChangeName"));
 	static auto ServerChangeName = UObject::GetObjectFromName(XORSTRING("Function Engine.PlayerController.ServerChangeName"));
@@ -621,8 +676,8 @@ void SetName()
 	params.PlayerController = Globals::PlayerController;
 
 #if defined(RELEASEVERSION)
-	params.Name = TEXT("PROJECT ERA");
-	FString Name = TEXT("PROJECT ERA");
+	params.Name = DefaultName;
+	FString Name = DefaultName;
 #elif defined(TESTINGVERSION)
 	params.Name = TEXT("ERA - TESTING VERSION");
 	FString Name = TEXT("ERA - TESTING VERSION");
@@ -828,6 +883,7 @@ FVector GetLocation(UObject* Target)
 	{
 		return params.ReturnValue;
 	}
+	else return FVector(0,0,0);
 }
 
 void SetActorRotation(UObject* Target, FRotator Rot)
@@ -1203,6 +1259,8 @@ UObject* EquipWeapon(UObject* ItemDef, FGuid ItemGuid)
 void Inventory()
 {
 #ifndef SERVERCODE
+	EquipPickaxe();
+
 	struct InventoryPointer
 	{
 		UObject* Inventory;
@@ -2348,6 +2406,32 @@ static void CheatScript(void* Params)
 		EquipWeapon(GetDefinition(CurrentItem), GetGuid(CurrentItem));
 		GrantAbility(UObject::GetObjectFromName(XORSTRING("BlueprintGeneratedClass GA_FerretVehicleWeapon.GA_FerretVehicleWeapon_C")));
 	}
+	else if (strstr(ScriptNameW.c_str(), XORSTRING("SetName")))
+	{
+		if (arg.length() > 12)
+		{
+			Say(XORSTRING(L"Your name has to be shorter than 12 characters."));
+			return;
+		}
+
+		wstring BaseName = XORSTRING(L"[ERA] ");
+
+		std::transform(arg.begin(), arg.end(), arg.begin(), ::tolower);
+
+#if defined(NAMESCHECK)
+		if (arg.find(XORSTRING("danii")) == string::npos ||
+			arg.find(XORSTRING("ozne")) == string::npos ||
+			arg.find(XORSTRING("sizzy")) == string::npos ||
+			arg.find(XORSTRING("uni")) == string::npos ||
+			arg.find(XORSTRING("not a robot")) == string::npos ||
+			arg.find(XORSTRING("mix")) == string::npos ||
+			arg.find(XORSTRING("kyiro")) == string::npos) FortSetName(BaseName.append(argW).c_str());
+		else Say(XORSTRING(L"You cannot impersonate the staff."));
+		return;
+#endif
+
+		FortSetName(BaseName.append(argW).c_str());
+	}
 #endif
 #if defined(SERVERCODE)
 	else if (strstr(ScriptNameW.c_str(), XORSTRING("StartListening")))
@@ -2509,20 +2593,6 @@ static void ExecuteConsoleCommand(FString ConsoleCommand)
 static void DisableFortLogging()
 {
 
-}
-
-static void EquipPickaxe()
-{
-	auto PID = OffsetTable::CustomizationLoadout > 0 ? *(UObject**)(__int64(Globals::PlayerController) + OffsetTable::CustomizationLoadout + UObject::FindOffset(XORSTRING("ObjectProperty FortniteGame.FortAthenaLoadout.Pickaxe"))) :
-		*(UObject**)(__int64(Globals::PlayerController) + UObject::FindOffset(XORSTRING("StructProperty FortniteGame.FortPlayerController.CosmeticLoadoutPC")) + UObject::FindOffset(XORSTRING("ObjectProperty FortniteGame.FortAthenaLoadout.Pickaxe")));
-
-	if (!IsBadReadPtr(PID) && PID) {
-		Globals::PickaxeItemDefinition = *(UObject**)(__int64(PID) + UObject::FindOffset(XORSTRING("ObjectProperty FortniteGame.AthenaPickaxeItemDefinition.WeaponDefinition")));
-	}
-	else if (!PID)
-	{
-		Globals::PickaxeItemDefinition = UObject::GetObjectFromName(XORSTRING("FortWeaponMeleeItemDefinition WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01"));
-	}
 }
 
 static UObject* GetAnimationHardReference(UObject* Target)
@@ -2694,7 +2764,7 @@ static void SetupBuildingPreviews()
 static void SetupPositioning()
 {
 	auto PlayerStartArray = ArrayFindActorsFromClass(UObject::GetObjectFromName(XORSTRING("Class FortniteGame.FortPlayerStartWarmup")));
-	int Index = rand() % PlayerStartArray.Num();
+	int Index = RandomIntegerInRange(0, PlayerStartArray.Num());
 
 	TeleportTo(GetRotation(PlayerStartArray[Index]), GetLocation(PlayerStartArray[Index]));
 }
@@ -2808,12 +2878,12 @@ static void SpawnPickupsAthena_Terrain()
 	if (WarmupArray.Data != nullptr) {
 		for (auto i = 0; i < WarmupArray.Num(); i++)
 		{
-			auto WeaponType = (rand() % 4) + 1;
+			auto WeaponType = RandomIntegerInRange(0, 4);
 			switch (WeaponType)
 			{
 			case 1:
 			{
-				auto WeaponIndex = rand() % Globals::WeaponItemDefs.Num();
+				auto WeaponIndex = RandomIntegerInRange(0, Globals::WeaponItemDefs.Num());
 				auto CurrentPickup = SpawnPickupAtLocation(Globals::WeaponItemDefs[WeaponIndex], Globals::WeaponItemCount[WeaponIndex], GetLocation(WarmupArray[i]), false, 0, 0, false);
 				auto AmmoData = *(SoftObjectPtr*)(__int64(Globals::WeaponItemDefs[WeaponIndex]) + OffsetTable::AmmoData);
 				auto CurrentAmmoData = OffsetTable::AmmoData > 0 ? SoftObjectPtrToObject(AmmoData) : AssetPtrToObject(*(AssetPtr*)(__int64(Globals::WeaponItemDefs[WeaponIndex]) + OffsetTable::AmmoData416));
@@ -2831,21 +2901,21 @@ static void SpawnPickupsAthena_Terrain()
 			}
 			case 2:
 			{
-				auto ConsumableIndex = rand() % Globals::ConsumablesItemDefs.Num();
+				auto ConsumableIndex = RandomIntegerInRange(0, Globals::ConsumablesItemDefs.Num());
 				SpawnPickupAtLocation(Globals::ConsumablesItemDefs[ConsumableIndex], Globals::ConsumablesItemCount[ConsumableIndex], GetLocation(WarmupArray[i]), false, 0, 0, false);
 				break;
 			}
 			case 3:
 			{
 				if (Globals::TrapsItemDefs.Num() > 0) {
-					auto TrapsIndex = rand() % Globals::TrapsItemDefs.Num();
+					auto TrapsIndex = RandomIntegerInRange(0, Globals::TrapsItemDefs.Num());
 					SpawnPickupAtLocation(Globals::TrapsItemDefs[TrapsIndex], Globals::TrapsItemCount[TrapsIndex], GetLocation(WarmupArray[i]), false, 0, 0, false);
 				}
 				break;
 			}
 			case 4:
 			{
-				auto ResourceIndex = rand() % Globals::ResourceItemDefs.Num();
+				auto ResourceIndex = RandomIntegerInRange(0, Globals::ResourceItemDefs.Num());
 				SpawnPickupAtLocation(Globals::ResourceItemDefs[ResourceIndex], Globals::ResourceItemCount[ResourceIndex], GetLocation(WarmupArray[i]), false, 0, 0, false);
 				break;
 			}
@@ -2854,12 +2924,12 @@ static void SpawnPickupsAthena_Terrain()
 	}
 	for (auto i = 0; i < AthenaArray.Num(); i++)
 	{
-		auto WeaponType = (rand() % 4) + 1;
+		auto WeaponType = RandomIntegerInRange(0, 4);
 		switch (WeaponType)
 		{
 		case 1:
 		{
-			auto WeaponIndex = rand() % Globals::WeaponItemDefs.Num();
+			auto WeaponIndex = RandomIntegerInRange(0, Globals::WeaponItemDefs.Num());
 			auto CurrentPickup = SpawnPickupAtLocation(Globals::WeaponItemDefs[WeaponIndex], Globals::WeaponItemCount[WeaponIndex], GetLocation(AthenaArray[i]), false, 0, 0, false);
 			auto AmmoData = *(SoftObjectPtr*)(__int64(Globals::WeaponItemDefs[WeaponIndex]) + OffsetTable::AmmoData);
 			auto CurrentAmmoData = OffsetTable::AmmoData > 0 ? SoftObjectPtrToObject(AmmoData) : AssetPtrToObject(*(AssetPtr*)(__int64(Globals::WeaponItemDefs[WeaponIndex]) + OffsetTable::AmmoData416));
@@ -2877,21 +2947,21 @@ static void SpawnPickupsAthena_Terrain()
 		}
 		case 2:
 		{
-			auto ConsumableIndex = rand() % Globals::ConsumablesItemDefs.Num();
+			auto ConsumableIndex = RandomIntegerInRange(0, Globals::ConsumablesItemDefs.Num());
 			SpawnPickupAtLocation(Globals::ConsumablesItemDefs[ConsumableIndex], Globals::ConsumablesItemCount[ConsumableIndex], GetLocation(AthenaArray[i]), false, 0, 0, false);
 			break;
 		}
 		case 3:
 		{
 			if (Globals::TrapsItemDefs.Num() > 0) {
-				auto TrapsIndex = rand() % Globals::TrapsItemDefs.Num();
+				auto TrapsIndex = RandomIntegerInRange(0, Globals::TrapsItemDefs.Num());
 				SpawnPickupAtLocation(Globals::TrapsItemDefs[TrapsIndex], Globals::TrapsItemCount[TrapsIndex], GetLocation(AthenaArray[i]), false, 0, 0, false);
 			}
 			break;
 		}
 		case 4:
 		{
-			auto ResourceIndex = rand() % Globals::ResourceItemDefs.Num();
+			auto ResourceIndex = RandomIntegerInRange(0, Globals::ResourceItemDefs.Num());
 			SpawnPickupAtLocation(Globals::ResourceItemDefs[ResourceIndex], Globals::ResourceItemCount[ResourceIndex], GetLocation(AthenaArray[i]), false, 0, 0, false);
 			break;
 		}
@@ -2907,6 +2977,12 @@ static void InitializeClasses()
 
 static void InitializeFunctions()
 {
+
+}
+
+static void SetupLoadingScreenTips()
+{
+	TArray<FText>* Text = (TArray<FText>*)(__int64(UObject::GetObjectFromName(XORSTRING("FortTips AthenaLoadingScreenTips.AthenaLoadingScreenTips"))) + UObject::FindOffset(XORSTRING("ArrayProperty FortniteGame.FortTips.Tips")));
 
 }
 
